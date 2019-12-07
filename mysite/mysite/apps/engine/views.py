@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from django_filters import rest_framework as filters
+
 from mysite.apps.engine.models import Project, Pack, Batch, Video, Task
 from mysite.apps.engine.serializers import (ProjectSerializer, PackSerializer,
                                             BatchSerializer, VideoSerializer,
@@ -56,9 +58,35 @@ def checkDir(path):
     return True
 
 
+
+
+# Video is one
+# # Task is many
+# Video.objects.filter(task__batch__pack='John').distinct()
+# Video.objects.filter(task__batch__pack__project='John').distinct()
+
+class VideoFilter(filters.FilterSet):
+    project = filters.NumberFilter(field_name="task__batch__pack__project__id", lookup_expr='exact', distinct=True)
+    pack = filters.NumberFilter(field_name="task__batch__pack__id", lookup_expr='exact', distinct=True)
+    ids = filters.NumberFilter(field_name="id", lookup_expr='exact', distinct=True)
+    class Meta:
+        model = Video
+        fields = ['project', 'pack']
+
+
+
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filter_class = VideoFilter
+
+    # TODO: check user permission and in group to get match videos, 
+    #       then delete queryset in first line
+    # def get_queryset(self):
+    #     user = self.request.user
+        
+
 
     # overwrite creat for multi object in one request
     def create(self, request, *args, **kwargs):

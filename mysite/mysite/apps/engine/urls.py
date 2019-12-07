@@ -8,7 +8,7 @@ router = routers.DefaultRouter()
 router.register('projects', ProjectViewSet)
 router.register('packs', PackViewSet)
 router.register('batchs', BatchViewSet)
-router.register('videos', VideoViewSet)
+router.register('videos', VideoViewSet, basename='videos')
 router.register('server', ServerViewSet, basename='server')
 
 

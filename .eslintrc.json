@@ -3,14 +3,12 @@
         "browser": true,
         "es6": true
     },
-    "extends": [
-        "plugin:react/recommended",
-        "airbnb"
-    ],
+    "extends": ["plugin:react/recommended", "airbnb"],
     "globals": {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
+    "parser": "babel-eslint",
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
@@ -18,9 +16,31 @@
         "ecmaVersion": 2018,
         "sourceType": "module"
     },
-    "plugins": [
-        "react"
-    ],
+    "plugins": ["react"],
     "rules": {
+        "import/no-extraneous-dependencies": [
+            "error",
+            { "devDependencies": true }
+        ],
+        "camelcase": "off",
+        "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+        "indent": ["error", 4],
+        "react/jsx-indent": ["error", 4],
+        "react/jsx-indent-props": ["error", 4],
+        "no-console": "off",
+        "no-shadow": "off",
+        "react/jsx-props-no-spreading": "off",
+        "jsx-a11y/label-has-associated-control": [2,
+            {
+                "labelComponents": ["label"],
+                "labelAttributes": ["htmlFor"],
+                "controlComponents": ["input"]
+            }
+        ],
+        "jsx-a11y/control-has-associated-label": "off",
+        "react/button-has-type":  "off",
+        "import/no-named-as-default": "off",
+        "no-param-reassign": ["error", { "props": false }]
+        
     }
 }

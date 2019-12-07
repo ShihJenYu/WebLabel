@@ -1,12 +1,8 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component, forwardRef } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { deletePack, renamePack } from '../../actions/packs';
-
 
 import MaterialTable from 'material-table';
-
-import { forwardRef } from 'react';
 
 import AddBox from '@material-ui/icons/AddBox';
 import ArrowDownward from '@material-ui/icons/ArrowDownward';
@@ -23,6 +19,7 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
+import { deletePack, renamePack } from '../../actions/packs';
 
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -41,24 +38,17 @@ const tableIcons = {
     Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
     SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
     ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
+    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
 };
 
 export class Packs extends Component {
-
-    state = {
-        data: []
-    }
-
-    static propTypes = {
-        // packs: PropTypes.array.isRequired,
-        project_packs: PropTypes.array.isRequired,
-        renamePack: PropTypes.func.isRequired,
-        deletePack: PropTypes.func.isRequired
+    constructor(props) {
+        super(props);
+        this.state = { };
     }
 
     componentDidMount() {
-        //this.props.getPacks();
+        // this.props.getPacks();
         console.log('dsa');
     }
 
@@ -67,18 +57,17 @@ export class Packs extends Component {
     // }
 
     async delete_pack(id) {
-        await this.props.deletePack(id);
+        const { deletePack } = this.props;
+        await deletePack(id);
     }
 
     async edit_pack(id, data) {
-        await this.props.renamePack(id, data);
+        const { renamePack } = this.props;
+        await renamePack(id, data);
     }
 
-
-
-
     render() {
-        let m_columns = [
+        const m_columns = [
             { title: 'ID', field: 'id' },
             { title: 'Name', field: 'name' },
             { title: 'OFFICE_Priority', field: 'officepriority', type: 'numeric' },
@@ -90,47 +79,54 @@ export class Packs extends Component {
             },
         ];
 
-        let m_options = {
+        const m_options = {
             filtering: true,
             pageSizeOptions: [10, 20],
-            pageSize: 10
+            pageSize: 10,
         };
+        const { project_packs } = this.props;
+
         return (
-            <Fragment>
-
-                <MaterialTable icons={tableIcons} title="Basic Filtering Preview" columns={m_columns} data={this.props.project_packs} options={m_options}
+            <>
+                <MaterialTable
+                    icons={tableIcons}
+                    title="Basic Filtering Preview"
+                    columns={m_columns}
+                    data={project_packs}
+                    options={m_options}
                     editable={{
-                        onRowUpdate: (newData, oldData) =>
-                            new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    {
-                                        this.edit_pack(oldData.id, newData);
-                                        resolve();
-                                    }
-                                    resolve()
-                                }, 100)
-                            }),
-                        onRowDelete: oldData =>
-                            new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    {
-                                        this.delete_pack(oldData.id);
-                                        resolve();
-
-                                    }
-                                    resolve()
-                                }, 100)
-                            }),
-                    }} />
-            </Fragment>
-        )
+                        onRowUpdate: (newData, oldData) => new Promise((resolve) => {
+                            setTimeout(() => {
+                                this.edit_pack(oldData.id, newData);
+                                resolve();
+                                resolve();
+                            }, 100);
+                        }),
+                        onRowDelete: (oldData) => new Promise((resolve) => {
+                            setTimeout(() => {
+                                this.delete_pack(oldData.id);
+                                resolve();
+                                resolve();
+                            }, 100);
+                        }),
+                    }}
+                />
+            </>
+        );
     }
 }
 
-const mapStateToProps = state => ({
-    // packs: state.packs.packs,
-    project_packs: state.projects.project_packs
+Packs.propTypes = {
+    // packs: PropTypes.array.isRequired,
+    project_packs: PropTypes.arrayOf(PropTypes.any).isRequired,
+    renamePack: PropTypes.func.isRequired,
+    deletePack: PropTypes.func.isRequired,
+};
 
-})
+const mapStateToProps = (state) => ({
+    // packs: state.packs.packs,
+    project_packs: state.projects.project_packs,
+
+});
 
 export default connect(mapStateToProps, { renamePack, deletePack })(Packs);

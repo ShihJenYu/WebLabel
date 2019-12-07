@@ -1,46 +1,45 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 
 import { connect } from 'react-redux';
+import { Button } from 'react-bootstrap';
 import Packs from './Packs';
 import Form from './Form';
-import ProjectSelect from '../myselect/MySelect';
-
-import { Button } from 'react-bootstrap';
-
+import ProjectSelect from '../myselect/ProjectSelect';
 
 export class Dashboard extends Component {
-
-    state = {
-        current_project: null,
-        show: false
+    constructor(props) {
+        super(props);
+        this.state = {
+            current_project: { id: 'null', name: 'null' },
+            show: false,
+        };
     }
 
     callbackFunction = (childData) => {
-        this.setState({ current_project: childData }, () => { console.log('current_project', childData, this.state.current_project) })
-
+        const { current_project } = this.state;
+        this.setState({ current_project: childData }, () => { console.log('current_project', childData, current_project); });
     }
 
     handleClose = () => { this.setState({ show: false }); }
-    handleShow = () => { this.setState({ show: true }); }
 
+    handleShow = () => { this.setState({ show: true }); }
 
     render() {
         const { current_project, show } = this.state;
-        let flag = (current_project == null) ? true : false;
+        const flag = (current_project.id === 'null');
 
         console.log('re-render in dashboard');
         return (
-            <Fragment>
+            <>
                 <ProjectSelect parentCallback={this.callbackFunction} />
-                <br></br>
-                <Button variant="primary" onClick={this.handleShow} disabled={flag} >
+                <br />
+                <Button variant="primary" onClick={this.handleShow} disabled={flag}>
                     Creat Pack
                 </Button>
-                <Form show={show} parentCallHide={this.handleClose} project={current_project} />
+                <Form show={show} parentCallHide={this.handleClose} project={current_project.id} />
                 <Packs />
-
-            </Fragment>
-        )
+            </>
+        );
     }
 }
 

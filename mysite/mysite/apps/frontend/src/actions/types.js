@@ -16,6 +16,8 @@ export const ADD_BATCH = "ADD_BATCH";
 export const GET_VIDEOS = "GET_VIDEOS";
 export const DELETE_VIDEO = "DELETE_VIDEO";
 export const ADD_VIDEO = "ADD_VIDEO";
+export const GET_PROJECTVIDEOS = "GET_PROJECTVIDEOS";
+export const GET_PACKVIDEOS = "GET_PACKVIDEOS";
 
 export const GET_TASKS = "GET_TASKS";
 export const DELETE_TASK = "DELETE_TASK";
