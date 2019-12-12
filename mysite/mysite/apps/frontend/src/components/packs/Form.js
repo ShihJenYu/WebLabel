@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
-import { addPack } from '../../actions/packs';
+import axios from 'axios';
 
 export class Form extends Component {
     constructor(props) {
@@ -18,6 +18,14 @@ export class Form extends Component {
         // this.props.getProjects();
     }
 
+    addPack = async (pack) => {
+        const { onAddPack } = this.props;
+        const res = await axios.post('/api/v1/packs/', pack);
+        console.log('res.data', res.data);
+
+        onAddPack(res.data);
+    }
+
     onChange = (e) => {
         this.setState({ [e.target.name]: e.target.value });
         console.log(e.target.name, e.target.value, this.state);
@@ -28,11 +36,15 @@ export class Form extends Component {
         console.log('submit add pack');
         console.log(this.state, 'ss', this.props);
         const { name, officepriority, sohopriority } = this.state;
-        const { project, addPack } = this.props;
-        const pack = {
-            name, officepriority, sohopriority, project,
-        };
-        addPack(pack);
+        const { projectID } = this.props;
+        if (projectID !== -1) {
+            const pack = {
+                name, officepriority, sohopriority, project: projectID,
+            };
+            this.addPack(pack);
+        } else {
+            console.log('project id is -1,  create was pass');
+        }
     }
 
     render() {
@@ -51,7 +63,6 @@ export class Form extends Component {
                                 <div className="row">
                                     <div className="col-9">
                                         <div className="form-group">
-                                            {/* <label htmlFor="packname">Pack Name</label> */}
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -99,17 +110,10 @@ export class Form extends Component {
 }
 
 Form.propTypes = {
-    project: PropTypes.string.isRequired,
+    projectID: PropTypes.number.isRequired,
     show: PropTypes.bool.isRequired,
-    addPack: PropTypes.func.isRequired,
     parentCallHide: PropTypes.func.isRequired,
-    // getProjects: PropTypes.func.isRequired,
+    onAddPack: PropTypes.func.isRequired,
 };
 
-// const mapStateToProps = (state) => ({
-//     // state.reducer.initialState's content
-//     // projects: state.projects.projects
-
-// });
-// mapStateToProps
-export default connect(null, { addPack })(Form);
+export default connect(null, { })(Form);

@@ -50,12 +50,12 @@ class BatchSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         print(validated_data)
         # pack_data = validated_data.pop('pack')
-        # batch = Batch.objects.create(**validated_data)
+        batch = Batch.objects.create(**validated_data)
         # packbatch = PackBatch.objects.create(
         #     pack_id=pack_data.get('id'), batch_id=batch.id)
 
-        # print(batch, packbatch)
-        # return batch
+        print(batch)
+        return batch
 
 
 class VideoSerializer(serializers.ModelSerializer):

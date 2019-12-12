@@ -1,56 +1,209 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component, forwardRef } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { Button } from 'react-bootstrap';
+
+import axios from 'axios';
+
+import MaterialTable from 'material-table';
+
+import AddBox from '@material-ui/icons/AddBox';
+import ArrowDownward from '@material-ui/icons/ArrowDownward';
+import Check from '@material-ui/icons/Check';
+import ChevronLeft from '@material-ui/icons/ChevronLeft';
+import ChevronRight from '@material-ui/icons/ChevronRight';
+import Clear from '@material-ui/icons/Clear';
+import DeleteOutline from '@material-ui/icons/DeleteOutline';
+import Edit from '@material-ui/icons/Edit';
+import FilterList from '@material-ui/icons/FilterList';
+import FirstPage from '@material-ui/icons/FirstPage';
+import LastPage from '@material-ui/icons/LastPage';
+import Remove from '@material-ui/icons/Remove';
+import SaveAlt from '@material-ui/icons/SaveAlt';
+import Search from '@material-ui/icons/Search';
+import ViewColumn from '@material-ui/icons/ViewColumn';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
+
+
+import PackSelect from '../myselect/PackSelect';
+import ProjectSelect from '../myselect/ProjectSelect';
 import { getBatchs, deleteBatch } from '../../actions/batchs';
 
-export class Batchs extends Component {
+const tableIcons = {
+    Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
+    Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
+    Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
+    Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
+    DetailPanel: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
+    Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
+    Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
+    Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
+    FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
+    LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
+    NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
+    PreviousPage: forwardRef((props, ref) => <ChevronLeft {...props} ref={ref} />),
+    ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
+    Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
+    SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
+    ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
+    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
+    OpenInNewIcon: forwardRef((props, ref) => <OpenInNewIcon {...props} ref={ref} />),
+};
 
-    static propTypes = {
-        batchs: PropTypes.array.isRequired,
-        getBatchs: PropTypes.func.isRequired,
-        deleteBatch: PropTypes.func.isRequired
+export class Batchs extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            currentProject: { id: null, name: null },
+            currentPack: { id: null, name: null },
+            projectPacks: [],
+            batchs: [],
+            newBatch: { id: null, name: null, pack: null },
+        };
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        if (prevState.newBatch !== nextProps.newBatch) {
+            if (prevState.currentPack.id === nextProps.newBatch.pack) {
+                return {
+                    newBatch: nextProps.newBatch,
+                    batchs: [...prevState.batchs, nextProps.newBatch],
+                    currentPack: prevState.currentPack,
+                    currentProject: prevState.currentProject,
+                };
+            }
+        }
+        return null;
     }
 
     componentDidMount() {
-        console.log("componentDidMount in batch batchs");
-        this.props.getBatchs();
+        console.log('componentDidMount in batch batchs');
+        // this.props.getBatchs();
+    }
+
+
+    async getBatchs(id) {
+        const res = await axios.get(`/api/v1/batchs/?pack=${id}`);
+        this.setState({ batchs: res.data });
+        console.log('ToDo write api for get batchs  use pack id');
+    }
+
+    handleProjectChange = (project, packs) => {
+        console.log('selectProject, projectPacks', project, packs);
+        const { currentProject, projectPacks, currentPack } = this.state;
+        this.setState({
+            currentProject: project,
+            projectPacks: packs,
+            currentPack: { id: null, name: null },
+        },
+        () => {
+            console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
+        });
+    }
+
+    handlePackChange = (childData) => {
+        const { currentPack } = this.state;
+        this.setState({ currentPack: childData }, () => { console.log('handlePackChange set', childData, currentPack); });
+    }
+
+    handleSearch = () => {
+        const { currentProject, currentPack } = this.state;
+        console.log('handleSearch', currentProject, currentPack);
+
+        if (typeof (currentProject.id) === 'number' && typeof (currentPack.id) === 'number') {
+            this.getBatchs(currentPack.id);
+        }
+    }
+
+    async delete_batch(id) {
+        const { batchs } = this.state;
+        const res = await axios.delete(`/api/v1/batchs/${id}/`);
+        console.log('res.data', res.data);
+        this.setState({ batchs: batchs.filter((item) => item.id !== id) },
+            () => {
+                console.log('batchs', batchs);
+            });
     }
 
     render() {
-        console.log("render in batch batchs");
+        console.log('render in batch batchs');
+        const {
+            batchs, projectPacks, currentProject, currentPack,
+        } = this.state;
+
+        let flag = true;
+        if (typeof (currentProject.id) === 'number' && typeof (currentPack.id) === 'number') {
+            flag = false;
+        }
+
+        const m_columns = [
+            { title: 'ID', field: 'id' },
+            { title: 'Name', field: 'name' },
+            { title: ' TasksDetail' },
+        ];
+
+        const m_options = {
+            filtering: true,
+            selection: true,
+            pageSizeOptions: [10, 20],
+            pageSize: 10,
+        };
+
         return (
-            <Fragment>
-                <h2>Batchs</h2>
-                <table className="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {this.props.batchs.map(batch => (
-                            <tr key={batch.id}>
-                                <td>{batch.id}</td>
-                                <td>{batch.name}</td>
-                                <td>
-                                    <button onClick={this.props.deleteBatch.bind(this, batch.id)} className="btn btn-danger btn-sm">
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </Fragment>
-        )
+            <>
+                <div className="row p-3">
+                    <div className="col p-0">
+                        <ProjectSelect onProjectChange={this.handleProjectChange} />
+                    </div>
+                    <div className="col p-0">
+                        <PackSelect
+                            projectPacks={projectPacks}
+                            onPackChange={this.handlePackChange}
+                        />
+                    </div>
+                    <div className="col p-0">
+                        <Button variant="primary" onClick={this.handleSearch} disabled={flag}>
+                            Search
+                            {/* #TODO: create api get project's pack's videos */}
+                        </Button>
+                    </div>
+                </div>
+                <MaterialTable
+                    icons={tableIcons}
+                    title="Batchs"
+                    columns={m_columns}
+                    data={batchs}
+                    options={m_options}
+                    editable={{
+                        onRowDelete: (oldData) => new Promise((resolve) => {
+                            setTimeout(() => {
+                                this.delete_batch(oldData.id);
+                                resolve();
+                            }, 100);
+                        }),
+                    }}
+                    actions={[
+                        {
+                            // TOTO:  hahaha
+                            tooltip: 'show selected batch der tasks',
+                            icon: OpenInNewIcon,
+                            onClick: (evt, data) => alert(`You want to delete ${data.length} rows`),
+                        },
+                    ]}
+                />
+            </>
+        );
     }
 }
 
-const mapStateToProps = state => ({
-    batchs: state.batchs.batchs
+Batchs.propTypes = {
+    newBatch: PropTypes.shape({
+        id: PropTypes.number,
+        pack: PropTypes.number,
+        name: PropTypes.string,
+    }).isRequired,
+    // getBatchs: PropTypes.func.isRequired,
+    // deleteBatch: PropTypes.func.isRequired,
+};
 
-})
-
-export default connect(mapStateToProps, { getBatchs, deleteBatch })(Batchs);
+export default connect(null, { })(Batchs);

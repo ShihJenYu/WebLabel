@@ -2,6 +2,7 @@ import React, { Component, forwardRef } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import axios from 'axios';
 import MaterialTable from 'material-table';
 
 import AddBox from '@material-ui/icons/AddBox';
@@ -19,7 +20,7 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
-import { deletePack, renamePack } from '../../actions/packs';
+// import { deletePack, renamePack } from '../../actions/packs';
 
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -57,13 +58,20 @@ export class Packs extends Component {
     // }
 
     async delete_pack(id) {
-        const { deletePack } = this.props;
-        await deletePack(id);
+        const { onDeletePack } = this.props;
+        // await deletePack(id);
+
+        const res = await axios.delete(`/api/v1/packs/${id}/`);
+        console.log('res.data', res.data);
+        onDeletePack(id);
     }
 
-    async edit_pack(id, data) {
-        const { renamePack } = this.props;
-        await renamePack(id, data);
+    async edit_pack(id, pack) {
+        // await deletePack(id);
+        const { onRenamePack } = this.props;
+        const res = await axios.patch(`/api/v1/packs/${id}/`, pack);
+        console.log('res.data', res.data);
+        onRenamePack(id, res.data);
     }
 
     render() {
@@ -75,7 +83,6 @@ export class Packs extends Component {
             {
                 title: 'Project',
                 field: 'project_name',
-                // lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
             },
         ];
 
@@ -84,7 +91,7 @@ export class Packs extends Component {
             pageSizeOptions: [10, 20],
             pageSize: 10,
         };
-        const { project_packs } = this.props;
+        const { projectPacks } = this.props;
 
         return (
             <>
@@ -92,20 +99,18 @@ export class Packs extends Component {
                     icons={tableIcons}
                     title="Basic Filtering Preview"
                     columns={m_columns}
-                    data={project_packs}
+                    data={projectPacks}
                     options={m_options}
                     editable={{
                         onRowUpdate: (newData, oldData) => new Promise((resolve) => {
                             setTimeout(() => {
                                 this.edit_pack(oldData.id, newData);
                                 resolve();
-                                resolve();
                             }, 100);
                         }),
                         onRowDelete: (oldData) => new Promise((resolve) => {
                             setTimeout(() => {
                                 this.delete_pack(oldData.id);
-                                resolve();
                                 resolve();
                             }, 100);
                         }),
@@ -117,16 +122,15 @@ export class Packs extends Component {
 }
 
 Packs.propTypes = {
-    // packs: PropTypes.array.isRequired,
-    project_packs: PropTypes.arrayOf(PropTypes.any).isRequired,
-    renamePack: PropTypes.func.isRequired,
-    deletePack: PropTypes.func.isRequired,
+    projectPacks: PropTypes.arrayOf(PropTypes.object).isRequired,
+    onRenamePack: PropTypes.func.isRequired,
+    onDeletePack: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => ({
-    // packs: state.packs.packs,
-    project_packs: state.projects.project_packs,
+// const mapStateToProps = (state) => ({
+//     // packs: state.packs.packs,
+//     project_packs: state.projects.project_packs,
+// });
 
-});
-
-export default connect(mapStateToProps, { renamePack, deletePack })(Packs);
+export default connect(null, {})(Packs);
+// export default connect(mapStateToProps, { renamePack, deletePack })(Packs);

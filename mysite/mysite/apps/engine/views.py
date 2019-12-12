@@ -42,9 +42,19 @@ class PackViewSet(viewsets.ModelViewSet):
     serializer_class = PackSerializer
 
 
+class BatchFilter(filters.FilterSet):
+    pack = filters.NumberFilter(field_name="pack__id", lookup_expr='exact', distinct=True)
+
+    class Meta:
+        model = Batch
+        fields = ['pack']
+
+
 class BatchViewSet(viewsets.ModelViewSet):
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filter_class = BatchFilter
 
 
 def checkDir(path):
@@ -58,21 +68,14 @@ def checkDir(path):
     return True
 
 
-
-
-# Video is one
-# # Task is many
-# Video.objects.filter(task__batch__pack='John').distinct()
-# Video.objects.filter(task__batch__pack__project='John').distinct()
-
 class VideoFilter(filters.FilterSet):
     project = filters.NumberFilter(field_name="task__batch__pack__project__id", lookup_expr='exact', distinct=True)
     pack = filters.NumberFilter(field_name="task__batch__pack__id", lookup_expr='exact', distinct=True)
     ids = filters.NumberFilter(field_name="id", lookup_expr='exact', distinct=True)
+
     class Meta:
         model = Video
         fields = ['project', 'pack']
-
 
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -85,8 +88,6 @@ class VideoViewSet(viewsets.ModelViewSet):
     #       then delete queryset in first line
     # def get_queryset(self):
     #     user = self.request.user
-        
-
 
     # overwrite creat for multi object in one request
     def create(self, request, *args, **kwargs):
@@ -214,10 +215,13 @@ class ServerViewSet(viewsets.ViewSet):
 
                     # update task's batch
                     task_names = batch_dict[batch_name]
+                    print('task_names',task_names)
                     update_task_ids = []
                     for task_qs in Task.objects.filter(name__in=task_names):
+                        print('task_qs.get_pack_from_path()',task_qs.get_pack_from_path())
                         if task_qs.get_pack_from_path() == pack_qs.name:
                             update_task_ids.append(task_qs.id)
+                    print('----',update_task_ids)
                     Task.objects.filter(
                         id__in=update_task_ids).update(batch=batch_qs)
 

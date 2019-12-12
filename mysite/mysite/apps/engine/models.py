@@ -66,7 +66,7 @@ class Task(models.Model):
         unique_together = [['name', 'batch']]
 
     def get_pack_from_path(self):
-        return os.path.relpath(self.path, SHARE_ROOT).split('/')[3]
+        return os.path.relpath(self.path, SHARE_ROOT).split('/')[2]
 
 
 class Category(models.Model):

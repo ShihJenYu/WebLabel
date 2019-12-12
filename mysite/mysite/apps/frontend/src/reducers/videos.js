@@ -1,4 +1,4 @@
-import { GET_VIDEOS, DELETE_VIDEO, ADD_VIDEO } from '../actions/types.js';
+import { GET_VIDEOS, DELETE_VIDEO, ADD_VIDEO, GET_PROJECTVIDEOS, GET_PACKVIDEOS } from '../actions/types.js';
 
 const initialStata = {
     videos: []
@@ -6,7 +6,7 @@ const initialStata = {
 
 export default function (state = initialStata, action) {
     switch (action.type) {
-        case GET_VIDEOS:
+        case GET_VIDEOS: case GET_PROJECTVIDEOS: case GET_PACKVIDEOS:
             return {
                 ...state,
                 videos: action.payload

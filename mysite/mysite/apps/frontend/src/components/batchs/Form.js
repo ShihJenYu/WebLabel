@@ -1,98 +1,136 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { addBatch } from '../../actions/batchs';
-import { getProjects, getProjectPacks } from '../../actions/projects';
+import { Modal } from 'react-bootstrap';
+
+import axios from 'axios';
+import ProjectSelect from '../myselect/ProjectSelect';
+import PackSelect from '../myselect/PackSelect';
 
 export class Form extends Component {
-
-    state = {
-        name: '',
-        pack: null
-    }
-
-    static propTypes = {
-        projects: PropTypes.array.isRequired,
-        packs: PropTypes.array.isRequired,
-        getProjects: PropTypes.func.isRequired,
-        getProjectPacks: PropTypes.func.isRequired,
-        addBatch: PropTypes.func.isRequired,
+    constructor(props) {
+        super(props);
+        this.state = {
+            name: '',
+            currentProject: { id: null, name: null },
+            currentPack: { id: null, name: null },
+            projectPacks: [],
+        };
     }
 
     componentDidMount() {
-        console.log("componentDidMount in batch form");
-        this.props.getProjects();
+        console.log(this.state, 'mount');
+    }
+
+    UNSAFE_componentWillReceiveProps(nextProps) {
+        console.log('nextProps in batch form', nextProps);
+        if (nextProps.show === false) {
+            this.setState({ projectPacks: [] });
+        }
     }
 
     componentDidUpdate() {
-        console.log("componentDidUpdate in batch form");
-        console.log(this.state)
+        console.log('componentDidUpdate in batch form');
+        console.log(this.state);
     }
 
-    onChange = e => { this.setState({ [e.target.name]: e.target.value }); }
+    onChange = (e) => { this.setState({ [e.target.name]: e.target.value }); }
 
-    resetPacks = e => {
-        this.props.getProjectPacks(e.target.value);
+    handleProjectChange = (project, packs) => {
+        console.log('selectProject, projectPacks', project, packs);
+        const { currentProject, projectPacks, currentPack } = this.state;
+        this.setState({
+            currentProject: project,
+            projectPacks: packs,
+            currentPack: { id: null, name: null },
+        },
+        () => {
+            console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
+        });
     }
 
-    onSubmit = e => {
+    handlePackChange = (childData) => {
+        const { currentPack } = this.state;
+        this.setState({ currentPack: childData }, () => { console.log('handlePackChange set', childData, currentPack); });
+    }
+
+    onSubmit = (e) => {
         e.preventDefault();
-        console.log("submit add batch");
-        console.log(this.state)
-        const { name, pack } = this.state;
-        const batch = { name, pack };
-        this.props.addBatch(batch);
+        console.log(this.state);
+        const { name, currentPack } = this.state;
+        const batch = { name, pack: currentPack.id };
+        // const { addBatch } = this.props;
+        this.add_batch(batch);
+    }
+
+    async add_batch(batch) {
+        const { onAddBatch } = this.props;
+        const res = await axios.post('/api/v1/batchs/', batch);
+        console.log('add in batch', res.data);
+        onAddBatch(res.data);
     }
 
     render() {
-        const { name, pack } = this.state;
-        console.log("render in batch form");
+        const { show, parentCallHide } = this.props;
+        const { name, projectPacks } = this.state;
+        console.log('render in batch form');
         return (
             <div>
-                <form onSubmit={this.onSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="batchname">Batch Name</label>
-                        <input type="text" className="form-control" id="batchname" aria-describedby="batchnameHelp" placeholder="Enter new batch name"
-                            name="name"
-                            value={name}
-                            onChange={this.onChange} />
-                        <small id="batchnameHelp" className="form-text text-muted">the batch will collect tasks for one worker</small>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="projectSelect">Project</label>
-                        <select defaultValue={'DEFAULT'} className="form-control" id="projectSelect" name="project" onChange={this.resetPacks}>
-                            <option disabled value="DEFAULT" > -- select an project -- </option>
-                            {this.props.projects.map(project => (
-                                <option key={project.id} value={project.id}>{project.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="packSelect">Pack</label>
-                        <select defaultValue={'DEFAULT'} className="form-control" id="packSelect" name="pack" onChange={this.onChange}>
-                            <option disabled value="DEFAULT" > -- select an pack -- </option>
-                            {this.props.packs.map(pack => (
-                                <option key={pack.id} value={pack.id}>{pack.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <button type="submit" className="btn btn-primary">Create</button>
-                    </div>
-                </form>
+                <Modal show={show} onHide={parentCallHide} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Create Batch </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <form onSubmit={this.onSubmit}>
+                            <div className="container">
+                                <div className="row p-3">
+                                    <div className="col p-0">
+                                        <ProjectSelect onProjectChange={this.handleProjectChange} />
+                                    </div>
+                                    <div className="col p-0">
+                                        <PackSelect
+                                            projectPacks={projectPacks}
+                                            onPackChange={this.handlePackChange}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="row p-3">
+                                    <div className="col-9 p-0">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="batchname"
+                                            aria-describedby="batchnameHelp"
+                                            placeholder="Enter new pack name"
+                                            name="name"
+                                            value={name}
+                                            onChange={this.onChange}
+                                        />
+                                        <small id="batchnameHelp" className="form-text text-muted">Dont create existed batch in pack</small>
+                                    </div>
+                                    <div className="col-3 p-0">
+                                        <button type="submit" className="btn btn-primary">Create</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </Modal.Body>
+                </Modal>
             </div>
-        )
+        );
     }
 }
 
-const mapStateToProps = state => ({
-    // state.reducer.initialState's content
-    packs: state.projects.project_packs,
-    projects: state.projects.projects
+Form.propTypes = {
+    show: PropTypes.bool.isRequired,
+    parentCallHide: PropTypes.func.isRequired,
+    onAddBatch: PropTypes.func.isRequired,
+};
 
-})
+// const mapStateToProps = (state) => ({
+//     // state.reducer.initialState's content
+//     packs: state.projects.project_packs,
+//     projects: state.projects.projects,
+// });
 
-export default connect(mapStateToProps, { addBatch, getProjects, getProjectPacks })(Form);
+export default connect(null, { })(Form);

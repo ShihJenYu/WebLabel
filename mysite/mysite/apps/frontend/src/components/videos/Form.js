@@ -96,11 +96,4 @@ Form.propTypes = {
     addVideo: PropTypes.func.isRequired,
 };
 
-// const mapStateToProps = (state) => ({
-//     // state.reducer.initialState's content
-//     // packs: state.projects.project_packs,
-//     // projects: state.projects.projects
-
-// });
-
 export default connect(null, { addVideo })(Form);

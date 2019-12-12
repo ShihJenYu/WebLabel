@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 
+import axios from 'axios';
 import { Button } from 'react-bootstrap';
 import Videos from './Videos';
 import Form from './Form';
@@ -10,26 +10,53 @@ import Uploader from './Uploader';
 import ProjectSelect from '../myselect/ProjectSelect';
 import PackSelect from '../myselect/PackSelect';
 
-import { getPackVideos, getProjectVideos } from '../../actions/videos';
 
 export class Dashboard extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            current_project: { id: 'null', name: 'null' },
-            current_pack: { id: 'null', name: 'null' },
+            currentProject: { id: null, name: null },
+            currentPack: { id: null, name: null },
+            projectPacks: [],
+            videos: [],
             show: false,
         };
     }
 
-    handleProjectChange = (childData) => {
-        const { current_project } = this.state;
-        this.setState({ current_project: childData }, () => { console.log('current_project', childData, current_project); });
+    async getVideosByProject(id) {
+        const res = await axios.get(`/api/v1/videos/?project=${id}`);
+        this.setState({ videos: res.data });
+    }
+
+    async getVideosByPack(id) {
+        const res = await axios.get(`/api/v1/videos/?pack=${id}`);
+        this.setState({ videos: res.data });
+    }
+
+    handleProjectChange = (project, packs) => {
+        console.log('selectProject, projectPacks', project, packs);
+        const { currentProject, projectPacks, currentPack } = this.state;
+        this.setState({
+            currentProject: project,
+            projectPacks: packs,
+            currentPack: { id: null, name: null },
+        },
+        () => {
+            console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
+        });
     }
 
     handlePackChange = (childData) => {
-        const { current_pack } = this.state;
-        this.setState({ current_pack: childData }, () => { console.log('current_pack', childData, current_pack); });
+        const { currentPack } = this.state;
+        this.setState({ currentPack: childData }, () => { console.log('handlePackChange set', childData, currentPack); });
+    }
+
+    handleDeleteVideo = (videoID) => {
+        const { videos } = this.state;
+        this.setState({ videos: videos.filter((item) => item.id !== videoID) },
+            () => {
+                console.log('videos', videos);
+            });
     }
 
     handleClose = () => { this.setState({ show: false }); }
@@ -37,23 +64,29 @@ export class Dashboard extends Component {
     handleShow = () => { this.setState({ show: true }); }
 
     handleSearch = () => {
-        const { current_project, current_pack } = this.state;
-        const { getProjectVideos, getPackVideos } = this.props;
-        console.log(current_project, current_pack);
+        const { currentProject, currentPack } = this.state;
+        console.log('handleSearch', currentProject, currentPack);
 
-        if (current_project.id !== 'null' && current_project.id !== null) {
-            if (current_pack.id !== 'null' && current_pack.id !== null) {
-                getPackVideos(current_project.id);
+        if (currentProject.id !== null) {
+            if (currentPack.id === null) {
+                // getProjectVideos(currentProject.id);
+                this.getVideosByProject(currentProject.id);
             } else {
-                getProjectVideos(current_project.id);
+                // getPackVideos(currentPack.id);
+                this.getVideosByPack(currentPack.id);
             }
         }
     }
 
     render() {
-        const { show, current_project, current_pack } = this.state;
-        const projectIsSelected = (current_project.id === null);
-        const packIsSelected = (current_pack.id === null);
+        const {
+            currentProject, projectPacks, videos, show,
+        } = this.state;
+        let flag = true;
+        if (typeof (currentProject.id) === 'number') {
+            flag = false;
+        }
+
         return (
             <>
                 <div className="row p-3">
@@ -74,12 +107,12 @@ export class Dashboard extends Component {
                     </div>
                     <div className="col p-0">
                         <PackSelect
-                            project={current_project.id}
+                            projectPacks={projectPacks}
                             onPackChange={this.handlePackChange}
                         />
                     </div>
                     <div className="col p-0">
-                        <Button variant="primary" onClick={this.handleSearch} disabled={projectIsSelected}>
+                        <Button variant="primary" onClick={this.handleSearch} disabled={flag}>
                             Search
                             {/* #TODO: create api get project's pack's videos */}
                         </Button>
@@ -87,7 +120,11 @@ export class Dashboard extends Component {
                 </div>
                 <div className="row p-3">
                     <div className="col p-0">
-                        <Videos />
+                        <Videos
+                            videos={videos}
+                            onDeleteVideo={this.handleDeleteVideo}
+                        />
+                        {/* #TODO add callback delete, use loacl state */}
                     </div>
                 </div>
 
@@ -101,9 +138,9 @@ export class Dashboard extends Component {
     }
 }
 
-Dashboard.propTypes = {
-    getProjectVideos: PropTypes.func.isRequired,
-    getPackVideos: PropTypes.func.isRequired,
-};
+// Dashboard.propTypes = {
+//     getProjectVideos: PropTypes.func.isRequired,
+//     getPackVideos: PropTypes.func.isRequired,
+// };
 
-export default connect(null, { getPackVideos, getProjectVideos })(Dashboard);
+export default connect(null, { })(Dashboard);

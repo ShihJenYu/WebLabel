@@ -1,7 +1,7 @@
 import React, { Component, forwardRef } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-
+import axios from 'axios';
 import MaterialTable from 'material-table';
 
 import AddBox from '@material-ui/icons/AddBox';
@@ -19,7 +19,6 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
-import { deleteVideo } from '../../actions/videos';
 
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -48,9 +47,12 @@ export class Videos extends Component {
         // getVideos();
     }
 
-    async delete_pack(id) {
-        const { deleteVideo } = this.props;
-        await deleteVideo(id);
+    async delete_video(id) {
+        const { onDeleteVideo } = this.props;
+        // await deleteVideo(id);
+        const res = await axios.delete(`/api/v1/videos/${id}/`);
+        console.log('res.data', res.data);
+        onDeleteVideo(id);
     }
 
     render() {
@@ -79,8 +81,7 @@ export class Videos extends Component {
                     editable={{
                         onRowDelete: (oldData) => new Promise((resolve) => {
                             setTimeout(() => {
-                                this.delete_pack(oldData.id);
-                                resolve();
+                                this.delete_video(oldData.id);
                                 resolve();
                             }, 100);
                         }),
@@ -92,13 +93,13 @@ export class Videos extends Component {
 }
 
 Videos.propTypes = {
-    videos: PropTypes.arrayOf(PropTypes.any).isRequired,
-    deleteVideo: PropTypes.func.isRequired,
+    videos: PropTypes.arrayOf(PropTypes.object).isRequired,
+    onDeleteVideo: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => ({
-    videos: state.videos.videos,
+// const mapStateToProps = (state) => ({
+//     videos: state.videos.videos,
 
-});
+// });
 
-export default connect(mapStateToProps, { deleteVideo })(Videos);
+export default connect(null, { })(Videos);

@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { getProjects, getProjectPacks } from '../../actions/projects';
+import axios from 'axios';
+import { getProjects } from '../../actions/projects';
+
 
 export class ProjectSelect extends Component {
     constructor(props) {
         super(props);
-        this.state = { current_project: null };
+        this.state = { currentProject: null };
     }
 
     componentDidMount() {
@@ -15,23 +17,28 @@ export class ProjectSelect extends Component {
     }
 
     componentDidUpdate() {
-        console.log('componentDidUpdate in MySelect');
+        console.log('componentDidUpdate in ProjectSelect');
         console.log(this.state);
     }
 
+    async getPacks(project) {
+        const { onProjectChange } = this.props;
+        const res = await axios.get(`/api/v1/projects/${project.id}/packs`);
+
+        console.log('res.data', res.data);
+        onProjectChange(project, res.data);
+    }
+
     sendData = () => {
-        // getProjectPacks ,
-        const { getProjectPacks, onProjectChange } = this.props;
-        const { current_project } = this.state;
-        getProjectPacks(current_project.id);
-        console.log('sendData', current_project);
-        onProjectChange(current_project);
+        const { currentProject } = this.state;
+        console.log('sendData', currentProject);
+        this.getPacks(currentProject);
     }
 
     onChange = (e) => {
         this.setState({
-            current_project: {
-                id: e.target.value,
+            currentProject: {
+                id: +e.target.value,
                 name: e.target.selectedOptions[0].text,
             },
         },
@@ -39,9 +46,9 @@ export class ProjectSelect extends Component {
     }
 
     render() {
-        const { current_project } = this.state;
+        const { currentProject } = this.state;
         const { projects } = this.props;
-        const projectname = (current_project == null) ? '' : current_project.name;
+        const projectname = (currentProject == null) ? '' : currentProject.name;
         console.log('projectname', projectname);
         return (
             <div className="input-group">
@@ -64,7 +71,6 @@ export class ProjectSelect extends Component {
 ProjectSelect.propTypes = {
     projects: PropTypes.arrayOf(PropTypes.any).isRequired,
     getProjects: PropTypes.func.isRequired,
-    getProjectPacks: PropTypes.func.isRequired,
     onProjectChange: PropTypes.func.isRequired,
 };
 
@@ -73,4 +79,4 @@ const mapStateToProps = (state) => ({
     projects: state.projects.projects,
 });
 
-export default connect(mapStateToProps, { getProjects, getProjectPacks })(ProjectSelect);
+export default connect(mapStateToProps, { getProjects })(ProjectSelect);
