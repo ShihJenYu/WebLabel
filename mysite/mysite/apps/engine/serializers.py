@@ -58,6 +58,14 @@ class BatchSerializer(serializers.ModelSerializer):
         return batch
 
 
+class TaskSerializer(serializers.ModelSerializer):
+    # pack = serializers.IntegerField(write_only=True, source='pack.id')
+
+    class Meta:
+        model = Task
+        fields = '__all__'
+
+
 class VideoSerializer(serializers.ModelSerializer):
     isFolder = serializers.BooleanField(
         write_only=True, source='task.isfolder')

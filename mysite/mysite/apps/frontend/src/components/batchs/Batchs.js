@@ -27,7 +27,6 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 
 import PackSelect from '../myselect/PackSelect';
 import ProjectSelect from '../myselect/ProjectSelect';
-import { getBatchs, deleteBatch } from '../../actions/batchs';
 
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -59,11 +58,14 @@ export class Batchs extends Component {
             projectPacks: [],
             batchs: [],
             newBatch: { id: null, name: null, pack: null },
+            tasks: [],
+            currentPackName: '',
+            currentBatchName: '',
         };
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (prevState.newBatch !== nextProps.newBatch) {
+        if (prevState.newBatch.id !== nextProps.newBatch.id) {
             if (prevState.currentPack.id === nextProps.newBatch.pack) {
                 return {
                     newBatch: nextProps.newBatch,
@@ -82,11 +84,24 @@ export class Batchs extends Component {
     }
 
 
-    async getBatchs(id) {
-        const res = await axios.get(`/api/v1/batchs/?pack=${id}`);
-        this.setState({ batchs: res.data });
+    async getBatchs(pack) {
+        const res = await axios.get(`/api/v1/batchs/?pack=${pack.id}`);
+        this.setState({
+            batchs: res.data,
+            tasks: [],
+            currentPackName: pack.name,
+            currentBatchName: '',
+        });
         console.log('ToDo write api for get batchs  use pack id');
     }
+
+
+    async getTasks(id, name) {
+        const res = await axios.get(`/api/v1/tasks/?batch=${id}`);
+        console.log('res.data', res.data);
+        this.setState({ tasks: res.data, currentBatchName: name });
+    }
+
 
     handleProjectChange = (project, packs) => {
         console.log('selectProject, projectPacks', project, packs);
@@ -106,12 +121,13 @@ export class Batchs extends Component {
         this.setState({ currentPack: childData }, () => { console.log('handlePackChange set', childData, currentPack); });
     }
 
+
     handleSearch = () => {
         const { currentProject, currentPack } = this.state;
         console.log('handleSearch', currentProject, currentPack);
 
         if (typeof (currentProject.id) === 'number' && typeof (currentPack.id) === 'number') {
-            this.getBatchs(currentPack.id);
+            this.getBatchs(currentPack);
         }
     }
 
@@ -125,16 +141,21 @@ export class Batchs extends Component {
             });
     }
 
+
     render() {
         console.log('render in batch batchs');
         const {
-            batchs, projectPacks, currentProject, currentPack,
+            batchs, projectPacks, currentProject, currentPack, tasks,
+            currentBatchName, currentPackName,
         } = this.state;
 
         let flag = true;
         if (typeof (currentProject.id) === 'number' && typeof (currentPack.id) === 'number') {
             flag = false;
         }
+
+        const tasksTitle = `${currentBatchName} Tasks`;
+        const batchsTitle = `${currentPackName} Batchs`;
 
         const m_columns = [
             { title: 'ID', field: 'id' },
@@ -150,7 +171,7 @@ export class Batchs extends Component {
         };
 
         return (
-            <>
+            <div className="container-full">
                 <div className="row p-3">
                     <div className="col p-0">
                         <ProjectSelect onProjectChange={this.handleProjectChange} />
@@ -168,30 +189,57 @@ export class Batchs extends Component {
                         </Button>
                     </div>
                 </div>
-                <MaterialTable
-                    icons={tableIcons}
-                    title="Batchs"
-                    columns={m_columns}
-                    data={batchs}
-                    options={m_options}
-                    editable={{
-                        onRowDelete: (oldData) => new Promise((resolve) => {
-                            setTimeout(() => {
-                                this.delete_batch(oldData.id);
-                                resolve();
-                            }, 100);
-                        }),
-                    }}
-                    actions={[
-                        {
-                            // TOTO:  hahaha
-                            tooltip: 'show selected batch der tasks',
-                            icon: OpenInNewIcon,
-                            onClick: (evt, data) => alert(`You want to delete ${data.length} rows`),
-                        },
-                    ]}
-                />
-            </>
+                <div className="row p-3">
+                    <div className="col-7 p-2">
+                        <MaterialTable
+                            icons={tableIcons}
+                            title={batchsTitle}
+                            columns={m_columns}
+                            data={batchs}
+                            options={m_options}
+                            editable={{
+                                onRowDelete: (oldData) => new Promise((resolve) => {
+                                    setTimeout(() => {
+                                        this.delete_batch(oldData.id);
+                                        resolve();
+                                    }, 100);
+                                }),
+                            }}
+                            actions={[
+                                {
+                                    // TOTO:  hahaha
+                                    tooltip: 'show selected batch der tasks',
+                                    icon: OpenInNewIcon,
+                                    onClick: (evt, data) => {
+                                        if (data.length !== 1) {
+                                            alert(`You select ${data.length} rows`);
+                                        } else {
+                                            this.getTasks(data[0].id, data[0].name);
+                                        }
+                                    },
+                                },
+                            ]}
+                        />
+                    </div>
+                    <div className="col-5 p-2">
+                        <MaterialTable
+                            icons={tableIcons}
+                            title={tasksTitle}
+                            columns={m_columns}
+                            data={tasks}
+                            options={m_options}
+                            editable={{
+                                onRowDelete: (oldData) => new Promise((resolve) => {
+                                    setTimeout(() => {
+                                        this.delete_batch(oldData.id);
+                                        resolve();
+                                    }, 100);
+                                }),
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
         );
     }
 }

@@ -11,7 +11,7 @@ from django_filters import rest_framework as filters
 from mysite.apps.engine.models import Project, Pack, Batch, Video, Task
 from mysite.apps.engine.serializers import (ProjectSerializer, PackSerializer,
                                             BatchSerializer, VideoSerializer,
-                                            FileInfoSerializer)
+                                            FileInfoSerializer, TaskSerializer)
 
 
 import os
@@ -124,6 +124,21 @@ class VideoViewSet(viewsets.ModelViewSet):
             # print(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED,
                             headers=headers)
+
+
+class TaskFilter(filters.FilterSet):
+    batch = filters.NumberFilter(field_name="batch__id", lookup_expr='exact', distinct=True)
+
+    class Meta:
+        model = Task
+        fields = ['batch']
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filter_class = TaskFilter
 
 
 class ServerViewSet(viewsets.ViewSet):
