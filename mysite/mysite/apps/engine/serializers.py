@@ -44,8 +44,8 @@ class BatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Batch
-        fields = '__all__'
-        # fields = ('id', 'name', 'pack')
+        # fields = '__all__'
+        fields = ('id', 'name', 'pack')
 
     def create(self, validated_data):
         print(validated_data)

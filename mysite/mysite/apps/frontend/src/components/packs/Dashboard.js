@@ -68,7 +68,7 @@ export class Dashboard extends Component {
         }
 
         return (
-            <>
+            <div className="container">
                 <ProjectSelect onProjectChange={this.handleProjectChange} />
                 <br />
                 <Button variant="primary" onClick={this.handleShow} disabled={flag}>
@@ -85,7 +85,7 @@ export class Dashboard extends Component {
                     onRenamePack={this.handleRenamePack}
                     onDeletePack={this.handleDeletePack}
                 />
-            </>
+            </div>
         );
     }
 }

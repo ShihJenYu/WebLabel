@@ -88,7 +88,7 @@ export class Dashboard extends Component {
         }
 
         return (
-            <>
+            <div className="container">
                 <div className="row p-3">
                     <Button variant="primary" onClick={this.handleShow}>
                     Open Create Videos Modal
@@ -133,7 +133,7 @@ export class Dashboard extends Component {
                 {/* file uploader for json assign task */}
 
 
-            </>
+            </div>
         );
     }
 }

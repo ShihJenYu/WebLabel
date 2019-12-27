@@ -14,6 +14,11 @@ class Project(models.Model):
         return self.name
 
 
+class ProjectUser(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
 class Pack(models.Model):
     name = models.CharField(max_length=256)
     officepriority = models.PositiveIntegerField(default=0)
@@ -37,7 +42,7 @@ class WorkSpace(models.Model):
 class Batch(models.Model):
     name = models.CharField(max_length=256)
     pack = models.ForeignKey(Pack, on_delete=models.CASCADE, null=True)
-
+    annotator = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     class Meta:
         unique_together = [['name', 'pack']]
 

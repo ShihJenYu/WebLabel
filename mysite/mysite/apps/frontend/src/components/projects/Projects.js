@@ -11,7 +11,7 @@ export class Projects extends Component {
         this.state = {
             project_id: null,
             project_name: null,
-            show: false,
+            rename: false,
         };
     }
 
@@ -41,18 +41,26 @@ export class Projects extends Component {
         this.handleClose();
     }
 
-    handleClose = () => { this.setState({ show: false }); }
+    handleClose = () => { this.setState({ rename: false }); }
 
-    handleShow = (id, name) => {
+    handleRename = (id, name) => {
         this.setState({
-            show: true,
+            rename: true,
             project_id: id,
             project_name: name,
         });
     }
 
+    showEdit = (edit, id, name) => {
+        const { onShowEdit } = this.props;
+        this.setState({
+            project_id: id,
+            project_name: name,
+        }, onShowEdit(edit, id, name));
+    }
+
     render() {
-        const { show, project_name } = this.state;
+        const { rename, project_name } = this.state;
         const { projects, deleteProject } = this.props;
         let tb = '';
         if (projects) {
@@ -61,11 +69,14 @@ export class Projects extends Component {
                     <td>{project.id}</td>
                     <td>{project.name}</td>
                     <td>
-                        <button onClick={() => this.handleShow(project.id, project.name)} className="btn btn-info btn-sm">
+                        <button onClick={() => this.handleRename(project.id, project.name)} className="btn btn-info btn-sm">
                             Rename
                         </button>
                         <button onClick={deleteProject.bind(this, project.id)} className="btn btn-danger btn-sm">
                             Delete
+                        </button>
+                        <button onClick={() => this.showEdit(true, project.id, project.name)} className="btn btn-warning btn-sm">
+                            Edit
                         </button>
                     </td>
                 </tr>
@@ -86,7 +97,7 @@ export class Projects extends Component {
                         {tb}
                     </tbody>
                 </table>
-                <Modal show={show} onHide={this.handleClose} centered>
+                <Modal show={rename} onHide={this.handleClose} centered>
                     <Modal.Header closeButton>
                         <Modal.Title>Rename Modal</Modal.Title>
                     </Modal.Header>
@@ -122,6 +133,8 @@ Projects.propTypes = {
     getProjects: PropTypes.func.isRequired,
     deleteProject: PropTypes.func.isRequired,
     renameProject: PropTypes.func.isRequired,
+    onShowEdit: PropTypes.func.isRequired,
+
 };
 
 const mapStateToProps = (state) => ({

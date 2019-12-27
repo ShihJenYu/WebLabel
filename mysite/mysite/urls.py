@@ -21,3 +21,5 @@ urlpatterns = [
     path('', include('mysite.apps.engine.urls')),
     path('', include('mysite.apps.frontend.urls')),
 ]
+
+handler404 = 'mysite.apps.frontend.views.error_404_view'

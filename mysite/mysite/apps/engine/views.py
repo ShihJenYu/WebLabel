@@ -5,10 +5,14 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from django_filters import rest_framework as filters
 
-from mysite.apps.engine.models import Project, Pack, Batch, Video, Task
+from django.db.models import Q
+from django.contrib.auth.models import Permission
+
+from mysite.apps.engine.models import Project, Pack, Batch, Video, Task, WorkSpace, ProjectUser
 from mysite.apps.engine.serializers import (ProjectSerializer, PackSerializer,
                                             BatchSerializer, VideoSerializer,
                                             FileInfoSerializer, TaskSerializer)
@@ -24,6 +28,7 @@ SHARE_ROOT = '/home/jeff/Work/ShareRoot'
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
+    permission_classes = (IsAuthenticated,)
     serializer_class = ProjectSerializer
 
     # url : projects/pk/packs
@@ -36,6 +41,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    @action(detail=True, methods=['GET'])
+    def users(self, request, pk):
+        # self.get_object()
+        data = {}
+        data['in'] = list(ProjectUser.objects.filter(project_id=pk).values_list('user__username',flat=True))
+        data['out'] = ['123','456']
+        return Response(data)
+
+    @action(detail=True, methods=['GET'], serializer_class=BatchSerializer)
+    def ask_batch(self, request, pk):
+        data = WorkSpace.objects.filter(Q(user=request.user) & ~Q(pack__officepriority=0) & Q(pack__project_id=pk)).order_by('-pack__officepriority').first()
+        current_pack = data.pack
+        print(current_pack.__dict__)
+
+        batch = Batch.objects.filter(Q(pack=current_pack) & Q(annotator=None)).order_by('name').first()
+
+        serializer = BatchSerializer(batch)
+        # if serializer.is_valid(raise_exception=True):
+        #     print(serializer.data)
+        return Response(serializer.data)
 
 class PackViewSet(viewsets.ModelViewSet):
     queryset = Pack.objects.all()
@@ -148,6 +173,23 @@ class ServerViewSet(viewsets.ViewSet):
 
     def get_serializer(self, *args, **kwargs):
         pass
+
+    @staticmethod
+    @action(detail=False, methods=['GET'])
+    def workplace(request):
+        data = {}
+        data['name'] = request.user.username
+
+        projects = list(WorkSpace.objects.filter(Q(user=request.user)).values_list('pack__project__name', flat=True).distinct())
+        print('projects',projects)
+        if request.user.is_superuser:
+            data['permission'] = 'admin'
+            return Response(data)
+        else:
+            # projects = list(WorkSpace.objects.filter(Q(user=request.user)).values_list('pack__project__name', flat=True).distinct())
+            data['permission'] = 'normal'
+            data['projects'] = sorted(projects)
+            return Response(data)
 
     @staticmethod
     @action(detail=False, methods=['GET'])

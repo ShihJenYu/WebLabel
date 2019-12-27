@@ -12,6 +12,8 @@ djangorestframework = "*"
 psycopg2-binary = "*"
 install = "*"
 django-filter = "*"
+djoser = "*"
+djangorestframework-jwt = "*"
 
 [requires]
 python_version = "3.6"
