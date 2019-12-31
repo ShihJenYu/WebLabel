@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
 
 from django.db.models import Q
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission, User
 
 from mysite.apps.engine.models import Project, Pack, Batch, Video, Task, WorkSpace, ProjectUser
 from mysite.apps.engine.serializers import (ProjectSerializer, PackSerializer,
@@ -41,13 +41,31 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-    @action(detail=True, methods=['GET'])
+    @action(detail=True, methods=['GET','POST'])
     def users(self, request, pk):
-        # self.get_object()
-        data = {}
-        data['in'] = list(ProjectUser.objects.filter(project_id=pk).values_list('user__username',flat=True))
-        data['out'] = ['123','456']
-        return Response(data)
+        # self.get_object() 
+        if request.method == 'GET':
+            data = {}
+            data['in'] = list(ProjectUser.objects.filter(project_id=pk).values_list('user__username',flat=True))
+            data['all'] = list(User.objects.all().values_list('username',flat=True))
+            return Response(data)
+        elif request.method == 'POST':
+            data = {}
+            print(request.data)
+            print(request.data['selected'])
+
+            selected_users = request.data['selected']
+
+            ProjectUser.objects.filter(Q(project_id=pk) & ~Q(user__username__in=selected_users)).delete()
+
+            for username in selected_users:
+                user = User.objects.filter(username=username).first()
+                if user:
+                    obj, created = ProjectUser.objects.get_or_create(project_id=pk, user=user)
+                    print(username, 'created:',created)
+                    data[username] = created
+
+            return Response(data)
 
     @action(detail=True, methods=['GET'], serializer_class=BatchSerializer)
     def ask_batch(self, request, pk):
@@ -179,8 +197,8 @@ class ServerViewSet(viewsets.ViewSet):
     def workplace(request):
         data = {}
         data['name'] = request.user.username
-
-        projects = list(WorkSpace.objects.filter(Q(user=request.user)).values_list('pack__project__name', flat=True).distinct())
+        projects = list(ProjectUser.objects.filter(Q(user=request.user)).values_list('project__name',flat=True).distinct())
+        # projects = list(WorkSpace.objects.filter(Q(user=request.user)).values_list('pack__project__name', flat=True).distinct())
         print('projects',projects)
         if request.user.is_superuser:
             data['permission'] = 'admin'

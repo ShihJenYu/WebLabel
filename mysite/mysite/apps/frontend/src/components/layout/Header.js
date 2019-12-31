@@ -2,13 +2,13 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Navbar, NavDropdown, Nav } from 'react-bootstrap';
-
+import { NavLink } from 'react-router-dom';
 import axios from 'axios';
 
 export class Header extends Component {
     constructor(props) {
         super(props);
-        this.state = { user: { name: '', permission: '', projects: [] } };
+        this.state = { user: { name: 'guest', permission: '', projects: [] } };
     }
 
     componentDidMount() {
@@ -33,24 +33,23 @@ export class Header extends Component {
 
     render() {
         const { user } = this.state;
-        const token = localStorage.getItem('jwt_token');
+        // const token = localStorage.getItem('jwt_token');
         console.log('user', user);
-        let username = '';
         let content = <></>;
         let content2 = <></>;
 
         if (user.permission === 'admin') {
             content = (
                 <>
-                    <Nav.Link href="/project">Project</Nav.Link>
-                    <Nav.Link href="/pack">Pack</Nav.Link>
-                    <Nav.Link href="/video">Video</Nav.Link>
-                    <Nav.Link href="/batch">Batch</Nav.Link>
+                    <NavLink to="/project" className="nav-link" activeClassName="active">Project</NavLink>
+                    <NavLink to="/pack" className="nav-link" activeClassName="active">Pack</NavLink>
+                    <NavLink to="/batch" className="nav-link" activeClassName="active">Batch</NavLink>
+                    <NavLink to="/video" className="nav-link" activeClassName="active">Video</NavLink>
                 </>
             );
         } else if (user.permission === 'normal') {
             const tmp = user.projects.map((project) => (
-                <NavDropdown.Item key={project} href={`/workplace/${project.toLowerCase()}`}>{project}</NavDropdown.Item>
+                <NavLink className="nav-link" key={project} to={`/workplace/${project.toLowerCase()}`}>{project}</NavLink>
             ));
             content = (
                 <>
@@ -61,18 +60,16 @@ export class Header extends Component {
             );
         }
 
-        if (token === null) {
-            username = 'guest';
+        if (user.name === 'guest') {
             content2 = (
                 <>
-                    <Nav.Link href="/login">Login</Nav.Link>
+                    <NavLink className="nav-link" to="/login">Login</NavLink>
                 </>
             );
         } else {
-            username = user.name;
             content2 = (
                 <>
-                    <Nav.Link href="/logout">Logout</Nav.Link>
+                    <NavLink className="nav-link" to="/logout">Logout</NavLink>
                 </>
             );
         }
@@ -87,7 +84,7 @@ export class Header extends Component {
                     </Nav>
                     <Navbar.Text>
                         {'User: '}
-                        {username}
+                        {user.name}
                     </Navbar.Text>
                     <Nav className="">
                         {content2}

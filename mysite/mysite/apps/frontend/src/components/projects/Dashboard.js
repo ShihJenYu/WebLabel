@@ -12,7 +12,7 @@ export class Dashboard extends Component {
             edit: false,
             project_id: null,
             project_name: null,
-            project_users: { in: [], out: [] },
+            project_users: { in: [], all: [] },
         };
     }
 
@@ -34,6 +34,15 @@ export class Dashboard extends Component {
         this.getUsers(show, id, name);
     }
 
+    handleCloseEdit = () => {
+        console.log('handleCloseEdit');
+        this.setState({
+            edit: false,
+            project_id: null,
+            project_name: null,
+            project_users: { in: [], all: [] },
+        });
+    }
 
     render() {
         const {
@@ -56,6 +65,7 @@ export class Dashboard extends Component {
                             project_id={project_id}
                             project_name={project_name}
                             project_users={project_users}
+                            parentCallHide={this.handleCloseEdit}
                         />
                     </div>
 

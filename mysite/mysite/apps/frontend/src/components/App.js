@@ -63,8 +63,8 @@ export class App extends Component {
         return (
             <Provider store={store}>
                 <>
-                    <Header onGetWorkPlace={this.handleGetWorkPlace} />
                     <Router>
+                        <Header onGetWorkPlace={this.handleGetWorkPlace} />
                         <div className="container-full">
                             {content}
                             <Route path="/login" component={Login} />
