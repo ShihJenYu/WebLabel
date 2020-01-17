@@ -11,5 +11,6 @@ urlpatterns = [
     path('login', views.index),
     path('logout', views.index),
     path('workplace/<str:project>', views.index),
+    path('annotation', views.annotationView),
     # re_path(r'^\S', views.index2),
 ]

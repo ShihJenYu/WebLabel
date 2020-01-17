@@ -5,17 +5,19 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from django_filters import rest_framework as filters
 
 from django.db.models import Q
 from django.contrib.auth.models import Permission, User
 
-from mysite.apps.engine.models import Project, Pack, Batch, Video, Task, WorkSpace, ProjectUser
+from mysite.apps.engine.models import Project, Pack, Batch, Video, Task, WorkSpace, ProjectUser, Label, AttributeSpec
 from mysite.apps.engine.serializers import (ProjectSerializer, PackSerializer,
                                             BatchSerializer, VideoSerializer,
-                                            FileInfoSerializer, TaskSerializer)
+                                            FileInfoSerializer, TaskSerializer,
+                                            WorkSpaceSerializer, LabelSerializer,
+                                            AttributeSpecSerializer)
 
 
 import os
@@ -41,13 +43,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-    @action(detail=True, methods=['GET','POST'])
+    @action(detail=True, methods=['GET', 'POST'])
     def users(self, request, pk):
-        # self.get_object() 
+        # self.get_object()
         if request.method == 'GET':
             data = {}
-            data['in'] = list(ProjectUser.objects.filter(project_id=pk).values_list('user__username',flat=True))
-            data['all'] = list(User.objects.all().values_list('username',flat=True))
+            data['in'] = list(ProjectUser.objects.filter(
+                project_id=pk).values_list('user__username', flat=True))
+            data['all'] = list(
+                User.objects.all().values_list('username', flat=True))
             return Response(data)
         elif request.method == 'POST':
             data = {}
@@ -56,37 +60,111 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             selected_users = request.data['selected']
 
-            ProjectUser.objects.filter(Q(project_id=pk) & ~Q(user__username__in=selected_users)).delete()
+            ProjectUser.objects.filter(Q(project_id=pk) & ~Q(
+                user__username__in=selected_users)).delete()
 
             for username in selected_users:
                 user = User.objects.filter(username=username).first()
                 if user:
-                    obj, created = ProjectUser.objects.get_or_create(project_id=pk, user=user)
-                    print(username, 'created:',created)
+                    obj, created = ProjectUser.objects.get_or_create(
+                        project_id=pk, user=user)
+                    print(username, 'created:', created)
                     data[username] = created
 
             return Response(data)
 
-    @action(detail=True, methods=['GET'], serializer_class=BatchSerializer)
-    def ask_batch(self, request, pk):
-        data = WorkSpace.objects.filter(Q(user=request.user) & ~Q(pack__officepriority=0) & Q(pack__project_id=pk)).order_by('-pack__officepriority').first()
-        current_pack = data.pack
-        print(current_pack.__dict__)
+    @action(detail=True, methods=['GET', 'POST'], serializer_class=BatchSerializer)
+    def batch(self, request, pk):
 
-        batch = Batch.objects.filter(Q(pack=current_pack) & Q(annotator=None)).order_by('name').first()
+        access = ProjectUser.objects.filter(
+            Q(user=request.user) & Q(project_id=pk)).exists()
+        if not access:
+            return Response("you cannot access this project, should contact the administrator", status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = BatchSerializer(batch)
-        # if serializer.is_valid(raise_exception=True):
-        #     print(serializer.data)
-        return Response(serializer.data)
+        packs = WorkSpace.objects.filter(Q(user=request.user) & ~Q(pack__officepriority=0) & Q(
+            pack__project_id=pk)).order_by('-pack__officepriority', 'pack__created_date').values_list('pack', flat=True).distinct()
+        # current_pack = data.pack
+        print('packs', packs)
+
+        batch = Batch.objects.filter(Q(pack__in=packs) & Q(
+            annotator=request.user) & Q(current=True)).first()
+
+        if request.method == 'POST':
+            # ask new batch
+            if batch:
+                return Response("you have current batch in this project, should use get method", status=status.HTTP_400_BAD_REQUEST)
+            else:
+                newBatch = None
+                for pack in packs:
+                    batch = Batch.objects.filter(Q(pack=pack) & Q(
+                        annotator=None)).order_by('name').first()
+                    if batch:
+                        break
+                if not batch:
+                    return Response("vacant batch was not found in packs", status=status.HTTP_400_BAD_REQUEST)
+                batch.annotator = request.user
+                batch.current = True
+                batch.save()
+                serializer = BatchSerializer(batch)
+
+                tasks = Task.objects.filter(batch=batch)
+                serializer2 = TaskSerializer(
+                    tasks, many=True, context={"request": request})
+
+                return Response({'batch': serializer.data, 'tasks': serializer2.data})
+
+        elif request.method == 'GET':
+            # get current batch
+            if batch:
+                serializer = BatchSerializer(batch)
+
+                tasks = Task.objects.filter(batch=batch)
+                serializer2 = TaskSerializer(
+                    tasks, many=True, context={"request": request})
+
+                return Response({'batch': serializer.data, 'tasks': serializer2.data})
+            else:
+                return Response("you have not any batch in this pack, should use post method", status=status.HTTP_400_BAD_REQUEST)
+
 
 class PackViewSet(viewsets.ModelViewSet):
     queryset = Pack.objects.all()
     serializer_class = PackSerializer
 
+    @action(detail=True, methods=['GET', 'POST'])
+    def users(self, request, pk):
+        # self.get_object()
+        if request.method == 'GET':
+            data = {}
+            data['in'] = list(WorkSpace.objects.filter(
+                pack_id=pk).values_list('user__username', flat=True))
+            data['all'] = list(
+                User.objects.all().values_list('username', flat=True))
+            return Response(data)
+        elif request.method == 'POST':
+            data = {}
+            print(request.data)
+            print(request.data['selected'])
+
+            selected_users = request.data['selected']
+
+            WorkSpace.objects.filter(Q(pack_id=pk) & ~Q(
+                user__username__in=selected_users)).delete()
+
+            for username in selected_users:
+                user = User.objects.filter(username=username).first()
+                if user:
+                    obj, created = WorkSpace.objects.get_or_create(
+                        pack_id=pk, user=user)
+                    print(username, 'created:', created)
+                    data[username] = created
+
+            return Response(data)
+
 
 class BatchFilter(filters.FilterSet):
-    pack = filters.NumberFilter(field_name="pack__id", lookup_expr='exact', distinct=True)
+    pack = filters.NumberFilter(
+        field_name="pack__id", lookup_expr='exact', distinct=True)
 
     class Meta:
         model = Batch
@@ -98,6 +176,19 @@ class BatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
     filter_backends = [filters.DjangoFilterBackend]
     filter_class = BatchFilter
+
+    @action(detail=True, methods=['POST'])
+    def send(self, request, pk):
+        # TODO check is owner or admin
+        batch = Batch.objects.get(pk=pk)
+
+        if request.user.is_superuser or request.user == batch.annotator:
+            batch.current = False
+            batch.save()
+            serializer = BatchSerializer(batch)
+            return Response(serializer.data)
+        else:
+            return Response("you are not owner of the batch", status=status.HTTP_400_BAD_REQUEST)
 
 
 def checkDir(path):
@@ -112,9 +203,12 @@ def checkDir(path):
 
 
 class VideoFilter(filters.FilterSet):
-    project = filters.NumberFilter(field_name="task__batch__pack__project__id", lookup_expr='exact', distinct=True)
-    pack = filters.NumberFilter(field_name="task__batch__pack__id", lookup_expr='exact', distinct=True)
-    ids = filters.NumberFilter(field_name="id", lookup_expr='exact', distinct=True)
+    project = filters.NumberFilter(
+        field_name="task__batch__pack__project__id", lookup_expr='exact', distinct=True)
+    pack = filters.NumberFilter(
+        field_name="task__batch__pack__id", lookup_expr='exact', distinct=True)
+    ids = filters.NumberFilter(
+        field_name="id", lookup_expr='exact', distinct=True)
 
     class Meta:
         model = Video
@@ -127,7 +221,7 @@ class VideoViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.DjangoFilterBackend]
     filter_class = VideoFilter
 
-    # TODO: check user permission and in group to get match videos, 
+    # TODO: check user permission and in group to get match videos,
     #       then delete queryset in first line
     # def get_queryset(self):
     #     user = self.request.user
@@ -165,12 +259,24 @@ class VideoViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
 
             # print(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED,
+            return Response(serializer.data, status=
+            status.HTTP_201_CREATED,
+                            headers=headers)
+    @action(detail=False, methods=['GET'])
+    def annotations(self, request):
+        print('sssss')
+
+        data = [{ 'name': 'firstobj', 'type': 'car', 'id': 0 },
+                 { 'name': 'secondobj', 'type': 'bike', 'id': 1 },
+                 { 'name': 'thirdobj', 'type': 'people', 'id': 2 },]
+        headers = self.get_success_headers(data)
+        return Response(data, status=status.HTTP_201_CREATED,
                             headers=headers)
 
 
 class TaskFilter(filters.FilterSet):
-    batch = filters.NumberFilter(field_name="batch__id", lookup_expr='exact', distinct=True)
+    batch = filters.NumberFilter(
+        field_name="batch__id", lookup_expr='exact', distinct=True)
 
     class Meta:
         model = Task
@@ -182,6 +288,38 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     filter_backends = [filters.DjangoFilterBackend]
     filter_class = TaskFilter
+
+
+class LabelFilter(filters.FilterSet):
+    project = filters.NumberFilter(
+        field_name="project__id", lookup_expr='exact', distinct=True)
+
+    class Meta:
+        model = Label
+        fields = ['project']
+
+
+class LabelViewSet(viewsets.ModelViewSet):
+    queryset = Label.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = LabelSerializer
+    filter_class = LabelFilter
+
+
+class AttributeSpecFilter(filters.FilterSet):
+    label = filters.NumberFilter(
+        field_name="label__id", lookup_expr='exact', distinct=True)
+
+    class Meta:
+        model = AttributeSpec
+        fields = ['label']
+
+
+class AttributeSpecViewSet(viewsets.ModelViewSet):
+    queryset = AttributeSpec.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = AttributeSpecSerializer
+    filter_class = AttributeSpecFilter
 
 
 class ServerViewSet(viewsets.ViewSet):
@@ -197,16 +335,22 @@ class ServerViewSet(viewsets.ViewSet):
     def workplace(request):
         data = {}
         data['name'] = request.user.username
-        projects = list(ProjectUser.objects.filter(Q(user=request.user)).values_list('project__name',flat=True).distinct())
+        projects = list(ProjectUser.objects.filter(
+            Q(user=request.user)).values('project__id', 'project__name').distinct())
         # projects = list(WorkSpace.objects.filter(Q(user=request.user)).values_list('pack__project__name', flat=True).distinct())
-        print('projects',projects)
+
+        projects = [{'id': p['project__id'], 'name': p['project__name']}
+                    for p in projects]
+
+        print('projects', projects)
         if request.user.is_superuser:
             data['permission'] = 'admin'
             return Response(data)
         else:
             # projects = list(WorkSpace.objects.filter(Q(user=request.user)).values_list('pack__project__name', flat=True).distinct())
             data['permission'] = 'normal'
-            data['projects'] = sorted(projects)
+            data['projects'] = sorted(
+                projects, key=lambda k: k['name'])
             return Response(data)
 
     @staticmethod
@@ -290,13 +434,14 @@ class ServerViewSet(viewsets.ViewSet):
 
                     # update task's batch
                     task_names = batch_dict[batch_name]
-                    print('task_names',task_names)
+                    print('task_names', task_names)
                     update_task_ids = []
                     for task_qs in Task.objects.filter(name__in=task_names):
-                        print('task_qs.get_pack_from_path()',task_qs.get_pack_from_path())
+                        print('task_qs.get_pack_from_path()',
+                              task_qs.get_pack_from_path())
                         if task_qs.get_pack_from_path() == pack_qs.name:
                             update_task_ids.append(task_qs.id)
-                    print('----',update_task_ids)
+                    print('----', update_task_ids)
                     Task.objects.filter(
                         id__in=update_task_ids).update(batch=batch_qs)
 

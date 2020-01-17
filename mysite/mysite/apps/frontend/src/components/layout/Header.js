@@ -49,7 +49,7 @@ export class Header extends Component {
             );
         } else if (user.permission === 'normal') {
             const tmp = user.projects.map((project) => (
-                <NavLink className="nav-link" key={project} to={`/workplace/${project.toLowerCase()}`}>{project}</NavLink>
+                <NavLink className="nav-link" key={project.id} to={`/workplace/${project.name.toLowerCase()}`}>{project.name}</NavLink>
             ));
             content = (
                 <>

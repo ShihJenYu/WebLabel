@@ -13,18 +13,22 @@ export class Dashboard extends Component {
             project_id: null,
             project_name: null,
             project_users: { in: [], all: [] },
+            labels: [],
         };
     }
 
     async getUsers(show, id, name) {
         if (id) {
             const res = await axios.get(`/api/v1/projects/${id}/users`);
+            const res2 = await axios.get(`/api/v1/labels/?project=${id}`);
             console.log('res', res);
+            console.log('res2', res2);
             this.setState({
                 edit: show,
                 project_id: id,
                 project_name: name,
                 project_users: res.data,
+                labels: res2.data,
             });
         }
     }
@@ -46,8 +50,10 @@ export class Dashboard extends Component {
 
     render() {
         const {
-            edit, project_id, project_name, project_users,
+            edit, project_id, project_name, project_users, labels,
         } = this.state;
+
+        console.log('labels', labels);
 
         return (
             <>
@@ -60,13 +66,16 @@ export class Dashboard extends Component {
                         <Projects onShowEdit={this.handleShowEdit} />
                     </div>
                     <div className="row">
-                        <Editor
-                            show={edit}
-                            project_id={project_id}
-                            project_name={project_name}
-                            project_users={project_users}
-                            parentCallHide={this.handleCloseEdit}
-                        />
+                        <div className="container">
+                            <Editor
+                                show={edit}
+                                project_id={project_id}
+                                project_name={project_name}
+                                project_users={project_users}
+                                labels={labels}
+                                parentCallHide={this.handleCloseEdit}
+                            />
+                        </div>
                     </div>
 
                 </div>

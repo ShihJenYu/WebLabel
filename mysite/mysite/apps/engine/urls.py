@@ -7,7 +7,8 @@ from rest_framework_jwt.views import verify_jwt_token
 
 from mysite.apps.engine.views import (ProjectViewSet, PackViewSet,
                                       VideoViewSet, BatchViewSet,
-                                      ServerViewSet, TaskViewSet)
+                                      ServerViewSet, TaskViewSet,
+                                      LabelViewSet, AttributeSpecViewSet)
 
 router = routers.DefaultRouter()
 router.register('projects', ProjectViewSet)
@@ -15,6 +16,8 @@ router.register('packs', PackViewSet)
 router.register('batchs', BatchViewSet)
 router.register('tasks', TaskViewSet)
 router.register('videos', VideoViewSet, basename='videos')
+router.register('labels', LabelViewSet)
+router.register('attributespecs', AttributeSpecViewSet)
 router.register('server', ServerViewSet, basename='server')
 
 

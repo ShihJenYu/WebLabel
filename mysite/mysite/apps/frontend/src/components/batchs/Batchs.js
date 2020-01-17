@@ -106,14 +106,16 @@ export class Batchs extends Component {
     handleProjectChange = (project, packs) => {
         console.log('selectProject, projectPacks', project, packs);
         const { currentProject, projectPacks, currentPack } = this.state;
-        this.setState({
-            currentProject: project,
-            projectPacks: packs,
-            currentPack: { id: null, name: null },
-        },
-        () => {
-            console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
-        });
+        this.setState(
+            {
+                currentProject: project,
+                projectPacks: packs,
+                currentPack: { id: null, name: null },
+            },
+            () => {
+                console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
+            },
+        );
     }
 
     handlePackChange = (childData) => {
@@ -165,7 +167,7 @@ export class Batchs extends Component {
 
         const m_options = {
             filtering: true,
-            selection: true,
+            // selection: true,
             pageSizeOptions: [10, 20],
             pageSize: 10,
         };
@@ -211,11 +213,11 @@ export class Batchs extends Component {
                                     tooltip: 'show selected batch der tasks',
                                     icon: OpenInNewIcon,
                                     onClick: (evt, data) => {
-                                        if (data.length !== 1) {
-                                            alert(`You select ${data.length} rows`);
-                                        } else {
-                                            this.getTasks(data[0].id, data[0].name);
-                                        }
+                                        // if (data.length !== 1) {
+                                        //     alert(`You select ${data.length} rows`);
+                                        // } else {
+                                        // }
+                                        this.getTasks(data.id, data.name);
                                     },
                                 },
                             ]}
@@ -254,4 +256,4 @@ Batchs.propTypes = {
     // deleteBatch: PropTypes.func.isRequired,
 };
 
-export default connect(null, { })(Batchs);
+export default connect(null, {})(Batchs);

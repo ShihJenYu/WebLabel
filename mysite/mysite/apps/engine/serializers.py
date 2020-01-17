@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from mysite.apps.engine.models import (Project, Pack,
-                                       Batch, Video, Task, FrameStatus)
+from mysite.apps.engine.models import (Project, Pack, WorkSpace,
+                                       Batch, Video, Task, FrameStatus, Label, AttributeSpec)
 
 # PackBatch,
 
@@ -32,6 +32,11 @@ class PackSerializer(serializers.ModelSerializer):
                   'sohopriority', 'project', 'project_name')
 
 
+class WorkSpaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkSpace
+        fields = '__all__'
+
 # class PacKBatchSerializer(serializers.ModelSerializer):
 
 #     class Meta:
@@ -45,7 +50,7 @@ class BatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Batch
         # fields = '__all__'
-        fields = ('id', 'name', 'pack')
+        fields = ('id', 'name', 'pack', 'annotator', 'current')
 
     def create(self, validated_data):
         print(validated_data)
@@ -117,3 +122,15 @@ class VideoSerializer(serializers.ModelSerializer):
             frameStatuses = FrameStatus.objects.bulk_create(tmp)
 
         return video
+
+
+class LabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Label
+        fields = '__all__'
+
+
+class AttributeSpecSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AttributeSpec
+        fields = '__all__'

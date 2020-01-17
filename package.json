@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "webpack --mode development ./mysite/mysite/apps/frontend/src/index.js --output ./mysite/mysite/apps/frontend/static/frontend/main.js",
+    "dev2": "webpack --mode development ./mysite/mysite/apps/frontend/src/index2.js --output ./mysite/mysite/apps/frontend/static/frontend/main2.js",
     "build": "webpack --mode production ./mysite/mysite/apps/frontend/src/index.js --output ./mysite/mysite/apps/frontend/static/frontend/main.js"
   },
   "keywords": [],
@@ -33,8 +34,11 @@
     "material-table": "^1.54.1",
     "node-sass": "^4.13.0",
     "rc-tree": "^2.1.3",
+    "react-beautiful-dnd": "^12.2.0",
+    "recompose": "^0.30.0",
     "sass-loader": "^8.0.0",
     "style-loader": "^1.0.1",
+    "styled-components": "^5.0.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
   },

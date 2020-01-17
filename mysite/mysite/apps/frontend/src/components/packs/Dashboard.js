@@ -44,14 +44,13 @@ export class Dashboard extends Component {
 
     handleRenamePack = (packID, pack) => {
         const { currentProject, projectPacks } = this.state;
-        this.setState({
-            projectPacks: projectPacks.map((item) => {
-                if (item.id === packID) { return pack; } return item;
-            }),
-        },
-        () => {
-            console.log('currentProject', currentProject, projectPacks);
-        });
+        this.setState(
+            {
+                projectPacks: projectPacks.map((item) => {
+                    if (item.id === packID) { return pack; } return item;
+                }),
+            }, () => { console.log('currentProject', currentProject, projectPacks); },
+        );
     }
 
 
@@ -68,23 +67,30 @@ export class Dashboard extends Component {
         }
 
         return (
-            <div className="container">
-                <ProjectSelect onProjectChange={this.handleProjectChange} />
-                <br />
-                <Button variant="primary" onClick={this.handleShow} disabled={flag}>
-                    Creat Pack
-                </Button>
-                <Form
-                    show={show}
-                    parentCallHide={this.handleClose}
-                    projectID={projectID}
-                    onAddPack={this.handleAddPack}
-                />
-                <Packs
-                    projectPacks={projectPacks}
-                    onRenamePack={this.handleRenamePack}
-                    onDeletePack={this.handleDeletePack}
-                />
+            <div className="container-full">
+                <div className="row m-2">
+                    <div className="col p-0">
+                        <ProjectSelect onProjectChange={this.handleProjectChange} />
+                    </div>
+                </div>
+                <div className="row m-2">
+                    <Button variant="primary" onClick={this.handleShow} disabled={flag}>
+                        Creat Pack
+                    </Button>
+                    <Form
+                        show={show}
+                        parentCallHide={this.handleClose}
+                        projectID={projectID}
+                        onAddPack={this.handleAddPack}
+                    />
+                </div>
+                <div className="row m-2">
+                    <Packs
+                        projectPacks={projectPacks}
+                        onRenamePack={this.handleRenamePack}
+                        onDeletePack={this.handleDeletePack}
+                    />
+                </div>
             </div>
         );
     }

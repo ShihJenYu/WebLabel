@@ -48,8 +48,8 @@ export class App extends Component {
         } else if (user.permission === 'normal') {
             const tmp = user.projects.map((project) => (
                 <Route
-                    key={project}
-                    path={`/workplace/${project.toLowerCase()}`}
+                    key={project.id}
+                    path={`/workplace/${project.name.toLowerCase()}`}
                     render={(props) => <WorkPlace {...props} project={project} />}
                 />
             ));

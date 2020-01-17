@@ -23,6 +23,8 @@ class Pack(models.Model):
     name = models.CharField(max_length=256)
     officepriority = models.PositiveIntegerField(default=0)
     sohopriority = models.PositiveIntegerField(default=0)
+    sohopriority = models.PositiveIntegerField(default=0)
+    created_date = models.DateTimeField(auto_now_add=True)
     project = models.ForeignKey(
         Project, related_name="packs", on_delete=models.CASCADE)
 
@@ -43,6 +45,8 @@ class Batch(models.Model):
     name = models.CharField(max_length=256)
     pack = models.ForeignKey(Pack, on_delete=models.CASCADE, null=True)
     annotator = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    current = models.BooleanField(default=False)
+
     class Meta:
         unique_together = [['name', 'pack']]
 
@@ -89,3 +93,81 @@ class FrameStatus(models.Model):
     checked = models.BooleanField(default=False)
     defect = models.BooleanField(default=False)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+
+class Label(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    name = models.CharField(max_length=128)
+
+
+class AttributeSpec(models.Model):
+    TYPE_CHOICES = (
+        ('CHECKBOX' , 'checkbox'),
+        ('RADIO', 'radio'),
+        ('TEXT', 'text'),
+        ('NUMBER', 'number'),
+        ('select', 'select'),
+        ('MULTISELECT', 'multiselect'),
+    )
+
+    label = models.ForeignKey(Label, on_delete=models.CASCADE)
+    name = models.CharField(max_length=128)
+    mutable = models.BooleanField()
+    attrtype = models.CharField(max_length=32, choices=TYPE_CHOICES)
+    default_value = models.CharField(max_length=128)
+    values = models.CharField(max_length=4096)
+
+    class Meta:
+        unique_together = [['label', 'name']]
+
+
+class AttributeVal(models.Model):
+    # BigAutoField 
+    id = models.BigAutoField(primary_key=True)
+    spec = models.ForeignKey(AttributeSpec, on_delete=models.CASCADE)
+    value = models.CharField(max_length=128)
+
+    class Meta:
+        abstract = True
+
+
+class Annotation(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    label = models.ForeignKey(Label, on_delete=models.CASCADE)
+    frame = models.PositiveIntegerField()
+    # group = models.PositiveIntegerField(null=True)
+
+    class Meta:
+        abstract = True
+
+
+class Shape(models.Model):
+    TYPE_CHOICES = (
+        ('RECTANGLE', 'rectangle'),
+        ('POLYGON', 'polygon'),
+        ('POLYLINE', 'polyline'),
+        ('POINTS', 'points'),
+    )
+    # RECTANGLE = 'rectangle' # (x0, y0, x1, y1)
+    # POLYGON = 'polygon'     # (x0, y0, ..., xn, yn)
+    # POLYLINE = 'polyline'   # (x0, y0, ..., xn, yn)
+    # POINTS = 'points'       # (x0, y0, ..., xn, yn)
+
+    shapetype = models.CharField(max_length=32, choices=TYPE_CHOICES)
+    # occluded = models.BooleanField(default=False)
+    # z_order = models.IntegerField(default=0)
+    # points = FloatArrayField()
+    points = models.TextField()
+
+    class Meta:
+        abstract = True
+
+# a shape has Annotation info (where from task & frame, and used label )
+class LabeledShape(Annotation, Shape):
+    pass
+
+
+# include all shape attr val
+class LabeledShapeAttributeVal(AttributeVal):
+    shape = models.ForeignKey(LabeledShape, on_delete=models.CASCADE)
