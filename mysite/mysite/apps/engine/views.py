@@ -304,6 +304,41 @@ class LabelViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     serializer_class = LabelSerializer
     filter_class = LabelFilter
+    ordering_fields = ['order']
+    ordering = ['order']
+
+    @action(detail=False, methods=['POST'])
+    def createWithAttrSpec(self, request):
+        params = request.data
+        srcLabel = params['label']
+        srcAttributespecs = params['attributespecs']
+        print('createWithAttrSpec', srcLabel, srcAttributespecs)
+
+        label = Label.objects.create(name=srcLabel['name'], project_id=srcLabel['project'])
+        
+        attributeSpecList = []
+        for srcAttributespec in srcAttributespecs:
+            attributeSpecList.append(AttributeSpec(name=srcAttributespec['name'],
+                                                mutable=srcAttributespec['mutable'],
+                                                attrtype=srcAttributespec['attrtype'],
+                                                default_value=srcAttributespec['default_value'],
+                                                values=srcAttributespec['values'],
+                                                order=srcAttributespec['order'],
+                                                label=label))
+
+        attributespecs = AttributeSpec.objects.bulk_create(attributeSpecList)
+
+        serializer = LabelSerializer(label, many=True, context={"request": request})
+
+
+        labels = Label.objects.filter(project_id=srcLabel['project'])
+        serializer1 = LabelSerializer(labels, many=True, context={"request": request})
+        serializer2 = AttributeSpecSerializer(attributespecs, many=True, context={"request": request})
+
+        print('label', labels,serializer1.data)
+        print('attributespecs', attributespecs,serializer2.data)
+        
+        return Response({'label':serializer.data, 'attributespecs':serializer2.data})
 
 
 class AttributeSpecFilter(filters.FilterSet):
@@ -320,6 +355,9 @@ class AttributeSpecViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     serializer_class = AttributeSpecSerializer
     filter_class = AttributeSpecFilter
+    ordering_fields = ['order']
+    ordering = ['order']
+
 
 
 class ServerViewSet(viewsets.ViewSet):

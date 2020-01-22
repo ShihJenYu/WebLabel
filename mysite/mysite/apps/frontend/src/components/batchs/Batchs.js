@@ -173,7 +173,7 @@ export class Batchs extends Component {
         };
 
         return (
-            <div className="container-full">
+            <div className="container-fluid">
                 <div className="row p-3">
                     <div className="col p-0">
                         <ProjectSelect onProjectChange={this.handleProjectChange} />

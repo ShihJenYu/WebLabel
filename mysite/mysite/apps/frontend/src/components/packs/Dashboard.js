@@ -67,7 +67,7 @@ export class Dashboard extends Component {
         }
 
         return (
-            <div className="container-full">
+            <div className="container-fluid">
                 <div className="row m-2">
                     <div className="col p-0">
                         <ProjectSelect onProjectChange={this.handleProjectChange} />

@@ -65,7 +65,7 @@ export class App extends Component {
                 <>
                     <Router>
                         <Header onGetWorkPlace={this.handleGetWorkPlace} />
-                        <div className="container-full">
+                        <div className="container-fluid">
                             {content}
                             <Route path="/login" component={Login} />
                             <Route path="/logout" component={Logout} />

@@ -23,10 +23,10 @@ export class Dashboard extends Component {
     render() {
         const { show, newBatch } = this.state;
         return (
-            <div className="container-full">
+            <div className="container-fluid">
                 <div className="row p-3">
                     <Button variant="primary" onClick={this.handleShow}>
-                    Open Create Batch Modal
+                        Open Create Batch Modal
                     </Button>
                     <Form
                         show={show}

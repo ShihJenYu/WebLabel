@@ -98,31 +98,36 @@ class FrameStatus(models.Model):
 class Label(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
+    order = models.PositiveIntegerField(default=99)
+
+    class Meta:
+        unique_together = [['project', 'name']]
 
 
 class AttributeSpec(models.Model):
     TYPE_CHOICES = (
-        ('CHECKBOX' , 'checkbox'),
-        ('RADIO', 'radio'),
-        ('TEXT', 'text'),
-        ('NUMBER', 'number'),
+        ('checkbox', 'checkbox'),
+        ('radio', 'radio'),
+        ('text', 'text'),
+        ('number', 'number'),
         ('select', 'select'),
-        ('MULTISELECT', 'multiselect'),
+        ('multiselect', 'multiselect'),
     )
 
     label = models.ForeignKey(Label, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
     mutable = models.BooleanField()
     attrtype = models.CharField(max_length=32, choices=TYPE_CHOICES)
-    default_value = models.CharField(max_length=128)
-    values = models.CharField(max_length=4096)
+    default_value = models.CharField(max_length=128, blank=True)
+    values = models.CharField(max_length=4096, blank=True)
+    order = models.PositiveIntegerField(default=99)
 
     class Meta:
         unique_together = [['label', 'name']]
 
 
 class AttributeVal(models.Model):
-    # BigAutoField 
+    # BigAutoField
     id = models.BigAutoField(primary_key=True)
     spec = models.ForeignKey(AttributeSpec, on_delete=models.CASCADE)
     value = models.CharField(max_length=128)
@@ -164,6 +169,8 @@ class Shape(models.Model):
         abstract = True
 
 # a shape has Annotation info (where from task & frame, and used label )
+
+
 class LabeledShape(Annotation, Shape):
     pass
 
