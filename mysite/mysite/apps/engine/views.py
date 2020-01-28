@@ -6,8 +6,10 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.filters import OrderingFilter
 
 from django_filters import rest_framework as filters
+
 
 from django.db.models import Q
 from django.contrib.auth.models import Permission, User
@@ -259,19 +261,19 @@ class VideoViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
 
             # print(serializer.data)
-            return Response(serializer.data, status=
-            status.HTTP_201_CREATED,
+            return Response(serializer.data, status=status.HTTP_201_CREATED,
                             headers=headers)
+
     @action(detail=False, methods=['GET'])
     def annotations(self, request):
         print('sssss')
 
-        data = [{ 'name': 'firstobj', 'type': 'car', 'id': 0 },
-                 { 'name': 'secondobj', 'type': 'bike', 'id': 1 },
-                 { 'name': 'thirdobj', 'type': 'people', 'id': 2 },]
+        data = [{'name': 'firstobj', 'type': 'car', 'id': 0},
+                {'name': 'secondobj', 'type': 'bike', 'id': 1},
+                {'name': 'thirdobj', 'type': 'people', 'id': 2}, ]
         headers = self.get_success_headers(data)
         return Response(data, status=status.HTTP_201_CREATED,
-                            headers=headers)
+                        headers=headers)
 
 
 class TaskFilter(filters.FilterSet):
@@ -303,6 +305,7 @@ class LabelViewSet(viewsets.ModelViewSet):
     queryset = Label.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = LabelSerializer
+    filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filter_class = LabelFilter
     ordering_fields = ['order']
     ordering = ['order']
@@ -314,31 +317,89 @@ class LabelViewSet(viewsets.ModelViewSet):
         srcAttributespecs = params['attributespecs']
         print('createWithAttrSpec', srcLabel, srcAttributespecs)
 
-        label = Label.objects.create(name=srcLabel['name'], project_id=srcLabel['project'])
-        
-        attributeSpecList = []
+        label = None
+        if srcLabel['id'] == -1:
+            # create label
+            label = Label.objects.create(
+                name=srcLabel['name'], project_id=srcLabel['project'])
+        else:
+            print("label need use save")
+            # save label
+            label = Label.objects.filter(id=srcLabel['id']).first()
+            label.name = srcLabel['name']
+            label.save()
+
+        newAttributeSpecList = []
+        oldAttributeSpecList = []
         for srcAttributespec in srcAttributespecs:
-            attributeSpecList.append(AttributeSpec(name=srcAttributespec['name'],
-                                                mutable=srcAttributespec['mutable'],
-                                                attrtype=srcAttributespec['attrtype'],
-                                                default_value=srcAttributespec['default_value'],
-                                                values=srcAttributespec['values'],
-                                                order=srcAttributespec['order'],
-                                                label=label))
+            if srcAttributespec['label'] == -1:
+                # new label & new attribute
+                newAttributeSpecList.append(AttributeSpec(name=srcAttributespec['name'],
+                                                          mutable=srcAttributespec['mutable'],
+                                                          attrtype=srcAttributespec['attrtype'],
+                                                          default_value=srcAttributespec['default_value'],
+                                                          values=srcAttributespec['values'],
+                                                          # default 99
+                                                          order=srcAttributespec['order'],
+                                                          label=label))
+            else:
+                print("attr need update", srcAttributespec)
+                # print('current',srcAttributespec)
+                if 'tmp_' in str(srcAttributespec['id']):
+                    newAttributeSpecList.append(AttributeSpec(name=srcAttributespec['name'],
+                                                              mutable=srcAttributespec['mutable'],
+                                                              attrtype=srcAttributespec['attrtype'],
+                                                              default_value=srcAttributespec['default_value'],
+                                                              values=srcAttributespec['values'],
+                                                              # default 99
+                                                              order=srcAttributespec['order'],
+                                                              label=label))
+                #     # exist label & new attribute
+                #     # create new attribute
+                    print('you will create', srcAttributespec)
+                else:
+                    #     # exist label & exist attribute
+                    #     # update
+                    attributes = AttributeSpec.objects.filter(
+                        id=srcAttributespec['id'])
+                    for attribute in attributes:
+                        attribute.name = srcAttributespec['name']
+                        attribute.mutable = srcAttributespec['mutable']
+                        attribute.attrtype = srcAttributespec['attrtype']
+                        attribute.default_value = srcAttributespec['default_value']
+                        attribute.values = srcAttributespec['values']
+                        attribute.order = srcAttributespec['order']
+                        attribute.save()
 
-        attributespecs = AttributeSpec.objects.bulk_create(attributeSpecList)
+        # new
+        attributespecs = AttributeSpec.objects.bulk_create(
+            newAttributeSpecList)
+        # update
+        attributespecs = AttributeSpec.objects.filter(
+            label=label).order_by('order')
 
-        serializer = LabelSerializer(label, many=True, context={"request": request})
+        labels = Label.objects.filter(
+            project_id=srcLabel['project']).order_by('order')
 
+        serializer = LabelSerializer(label, context={"request": request})
+        serializer1 = LabelSerializer(
+            labels, many=True, context={"request": request})
+        serializer2 = AttributeSpecSerializer(
+            attributespecs, many=True, context={"request": request})
 
-        labels = Label.objects.filter(project_id=srcLabel['project'])
-        serializer1 = LabelSerializer(labels, many=True, context={"request": request})
-        serializer2 = AttributeSpecSerializer(attributespecs, many=True, context={"request": request})
+        return Response({'labels': serializer1.data, 'attributespecs': serializer2.data})
 
-        print('label', labels,serializer1.data)
-        print('attributespecs', attributespecs,serializer2.data)
-        
-        return Response({'label':serializer.data, 'attributespecs':serializer2.data})
+    @action(detail=False, methods=['POST'])
+    def updateOrder(self, request):
+        params = request.data
+        srcLabels = params['labels']
+
+        for srcLabel in srcLabels:
+            label = Label.objects.filter(id=srcLabel['id']).first()
+            label.order = srcLabel['order']
+            label.save()
+
+        return Response({'labels': 'success'})
 
 
 class AttributeSpecFilter(filters.FilterSet):
@@ -354,10 +415,10 @@ class AttributeSpecViewSet(viewsets.ModelViewSet):
     queryset = AttributeSpec.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = AttributeSpecSerializer
+    filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filter_class = AttributeSpecFilter
     ordering_fields = ['order']
     ordering = ['order']
-
 
 
 class ServerViewSet(viewsets.ViewSet):

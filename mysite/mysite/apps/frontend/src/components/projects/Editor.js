@@ -83,11 +83,15 @@ export class Editor extends Component {
         const {
             show, project_name, onHide,
             annotators, selectedAnnotators, onChangeAnnotators, onResetAnnotators,
-            reOrderLabels, onDragEndLabel, onDragEndAttributespec,
-            openLEdit, editingLabelID, labelName, attributespecName, attributespec, attributespecs, onOpenLabelEditor, onCloseLabelEditor,
-            openSpecEdit, editingSpecID, onOpenSpecEditor, onCloseSpecEditor,
 
-            onChangeAttrText, onChangeInputText, onCreateLabel, onCreateAttributeSpec,
+            openLEdit, onOpenLabelEditor, onCloseLabelEditor,
+            openSpecEdit, onOpenSpecEditor, onCloseSpecEditor,
+
+            orderLabels, onDragEndLabel, onSaveOrder,
+            label, onChangeLabelValue, onCreateLabel, onSaveLabel,
+
+            orderAttributespecs, onDragEndAttributespec,
+            attributespec, onChangeAttributeSpecValue, onCreateAttributeSpec, onSaveAttributeSpec,
         } = this.props;
 
         const annotatorSelected = [...selectedAnnotators].sort();
@@ -97,22 +101,24 @@ export class Editor extends Component {
 
         const LEDitorContent = (
             <LEditor
-                editingLabelID={editingLabelID}
-                editingSpecID={editingSpecID}
-                labelName={labelName}
-                attributespecName={attributespecName}
-                attributespec={attributespec}
-                attributespecs={attributespecs}
-                onDragEndAttributespec={onDragEndAttributespec}
                 onCloseLabelEditor={onCloseLabelEditor}
+
                 openSpecEdit={openSpecEdit}
                 onOpenSpecEditor={onOpenSpecEditor}
                 onCloseSpecEditor={onCloseSpecEditor}
 
-                onChangeAttrText={onChangeAttrText}
-                onChangeInputText={onChangeInputText}
+                label={label}
+                onChangeLabelValue={onChangeLabelValue}
                 onCreateLabel={onCreateLabel}
+                onSaveLabel={onSaveLabel}
+
+                orderAttributespecs={orderAttributespecs}
+                onDragEndAttributespec={onDragEndAttributespec}
+
+                attributespec={attributespec}
+                onChangeAttributeSpecValue={onChangeAttributeSpecValue}
                 onCreateAttributeSpec={onCreateAttributeSpec}
+                onSaveAttributeSpec={onSaveAttributeSpec}
             />
         );
         let content = null;
@@ -130,7 +136,7 @@ export class Editor extends Component {
                     </div>
                     <div className="row">
                         <div className="col">
-                            <Tabs defaultActiveKey="annotatiors" transition={false} id="noanim-tab-example">
+                            <Tabs defaultActiveKey="labels" transition={false} id="noanim-tab-example">
                                 <Tab eventKey="annotatiors" title="Annotatiors">
                                     <div className="container py-2">
                                         <div className="row">
@@ -164,7 +170,7 @@ export class Editor extends Component {
                                 <Tab eventKey="labels" title="Labels">
                                     <div className="container-fluid">
                                         <div className="row">
-                                            <div className="col">
+                                            <div className="col-auto">
                                                 <Button
                                                     size="small"
                                                     variant="outlined"
@@ -175,14 +181,28 @@ export class Editor extends Component {
                                                     Label
                                                 </Button>
                                             </div>
+                                            <div className="col-auto">
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    startIcon={<AddIcon fontSize="small" />}
+                                                    onClick={() => { onSaveOrder(); }}
+                                                >
+                                                    Save Order
+                                                </Button>
+                                            </div>
                                         </div>
                                         <div className="row">
                                             <div className="col" style={{ maxWidth: '300px' }}>
                                                 <DragDropContext onDragEnd={onDragEndLabel}>
                                                     <Droppable droppableId="droppableLabels">
                                                         {(provided) => (
-                                                            <Container ref={provided.innerRef} {...provided.droppableProps}>
-                                                                {reOrderLabels.map((t, i) => (
+                                                            <Container
+                                                                ref={provided.innerRef}
+                                                                {...provided.droppableProps}
+                                                            >
+                                                                {orderLabels.map((t, i) => (
                                                                     <Draggable key={t.id} draggableId={`label_${t.id}`} index={i}>
                                                                         {(p) => (
                                                                             <div>
@@ -229,40 +249,56 @@ Editor.propTypes = {
     project_id: PropTypes.number.isRequired,
     project_name: PropTypes.string.isRequired,
     onHide: PropTypes.func.isRequired,
-    annotators: PropTypes.shape(PropTypes.any).isRequired,
+    annotators: PropTypes.shape({
+        in: PropTypes.arrayOf(PropTypes.any).isRequired,
+        all: PropTypes.arrayOf(PropTypes.any).isRequired,
+    }).isRequired,
     selectedAnnotators: PropTypes.arrayOf(PropTypes.any).isRequired,
-
-    reOrderLabels: PropTypes.arrayOf(PropTypes.any).isRequired,
     onChangeAnnotators: PropTypes.func.isRequired,
     onResetAnnotators: PropTypes.func.isRequired,
-    onDragEndLabel: PropTypes.func.isRequired,
 
+    orderLabels: PropTypes.arrayOf(PropTypes.any).isRequired,
+    onDragEndLabel: PropTypes.func.isRequired,
+    onSaveOrder: PropTypes.func.isRequired,
 
     openLEdit: PropTypes.bool.isRequired,
-    editingLabelID: PropTypes.number.isRequired,
-    editingSpecID: PropTypes.number.isRequired,
-    labelName: PropTypes.string.isRequired,
-    attributespecName: PropTypes.string.isRequired,
-    attributespec: PropTypes.shape(PropTypes.any).isRequired,
-    attributespecs: PropTypes.arrayOf(PropTypes.any).isRequired,
     onOpenLabelEditor: PropTypes.func.isRequired,
     onCloseLabelEditor: PropTypes.func.isRequired,
-    onDragEndAttributespec: PropTypes.func.isRequired,
 
     openSpecEdit: PropTypes.bool.isRequired,
     onOpenSpecEditor: PropTypes.func.isRequired,
     onCloseSpecEditor: PropTypes.func.isRequired,
 
-    onChangeAttrText: PropTypes.func.isRequired,
-    onChangeInputText: PropTypes.func.isRequired,
+    // editingLabelID: PropTypes.number.isRequired,
+    // labelName: PropTypes.string.isRequired,
+    label: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        project: PropTypes.number.isRequired,
+        order: PropTypes.number.isRequired,
+    }).isRequired,
+    onChangeLabelValue: PropTypes.func.isRequired,
     onCreateLabel: PropTypes.func.isRequired,
+    onSaveLabel: PropTypes.func.isRequired,
+
+    orderAttributespecs: PropTypes.arrayOf(PropTypes.any).isRequired,
+    onDragEndAttributespec: PropTypes.func.isRequired,
+
+    // editingSpecID: PropTypes.number.isRequired,
+    // attributespecName: PropTypes.string.isRequired,
+    attributespec: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        mutable: PropTypes.bool.isRequired,
+        attrtype: PropTypes.string.isRequired,
+        default_value: PropTypes.string.isRequired,
+        values: PropTypes.string.isRequired,
+        label: PropTypes.number.isRequired,
+        order: PropTypes.number.isRequired,
+    }).isRequired,
+    onChangeAttributeSpecValue: PropTypes.func.isRequired,
     onCreateAttributeSpec: PropTypes.func.isRequired,
-    // project_users: PropTypes.shape({
-    //     in: PropTypes.array,
-    //     all: PropTypes.array,
-    // }).isRequired,
-    // labels: PropTypes.arrayOf(PropTypes.any).isRequired,
-    // parentCallHide: PropTypes.func.isRequired,
+    onSaveAttributeSpec: PropTypes.func.isRequired,
 };
 
 export default connect(null, {})(Editor);

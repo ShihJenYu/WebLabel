@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import axios from 'axios';
 
 import { Tab, Tabs } from 'react-bootstrap';
 
@@ -41,13 +40,7 @@ export class LEditor extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false,
-            project_id: null,
-            project_name: null,
-            selected: [],
-            project_users: { in: [], all: [] },
 
-            labeleSelected: null,
         };
     }
 
@@ -60,21 +53,26 @@ export class LEditor extends Component {
     }
 
     render() {
-        const { attributespecs, onDragEndAttributespec,
-            onCloseLabelEditor, editingLabelID, editingSpecID,
+        const {
+            onCloseLabelEditor,
             openSpecEdit, onOpenSpecEditor, onCloseSpecEditor,
-            onChangeAttrText, onChangeInputText, labelName, attributespecName, attributespec,
-            onCreateLabel, onCreateAttributeSpec,
+
+            label, onChangeLabelValue, onCreateLabel, onSaveLabel,
+
+            orderAttributespecs, onDragEndAttributespec,
+            attributespec, onChangeAttributeSpecValue, onCreateAttributeSpec, onSaveAttributeSpec,
         } = this.props;
 
         let SpecButton = null;
-        if (editingSpecID !== -1) {
+        console.log('attributespec in Leditor', attributespec);
+        if (attributespec.id !== -1) {
             SpecButton = (
                 <Button
                     size="small"
                     variant="outlined"
                     color="primary"
                     startIcon={<SaveIcon fontSize="small" />}
+                    onClick={onSaveAttributeSpec}
                 >
                     Save
                 </Button>
@@ -112,7 +110,7 @@ export class LEditor extends Component {
                                     placeholder="attribute name"
                                     style={{ maxWidth: '100%' }}
                                     value={attributespec.name}
-                                    onChange={onChangeAttrText}
+                                    onChange={onChangeAttributeSpecValue}
                                 />
                             </div>
                             <div className="col-auto">
@@ -129,7 +127,7 @@ export class LEditor extends Component {
                                     id="attributespecType"
                                     name="attrtype"
                                     value={attributespec.attrtype}
-                                    onChange={onChangeAttrText}
+                                    onChange={onChangeAttributeSpecValue}
                                 >
                                     <option value="select">select</option>
                                     <option value="text">text</option>
@@ -160,14 +158,14 @@ export class LEditor extends Component {
         );
 
         let LEditButton = null;
-        if (editingLabelID !== -1) {
+        if (label.id !== -1) {
             LEditButton = (
                 <Button
                     size="small"
                     variant="outlined"
                     color="primary"
                     startIcon={<SaveIcon fontSize="small" />}
-                // onClick={onCreateLabel}
+                    onClick={onSaveLabel}
                 >
                     Save
                 </Button>
@@ -191,7 +189,7 @@ export class LEditor extends Component {
             <div className="col" style={{ maxWidth: '800px' }}>
                 <div className="card">
                     <div className="card-header">
-                        Settings
+                        Label Settings
                         <IconButton
                             className="float-right p-0"
                             aria-label="delete"
@@ -206,10 +204,10 @@ export class LEditor extends Component {
                                 <TextField
                                     label="Label Name"
                                     id="labelName"
-                                    name="labelName"
+                                    name="name"
                                     size="small"
-                                    value={labelName}
-                                    onChange={onChangeInputText}
+                                    value={label.name}
+                                    onChange={onChangeLabelValue}
                                 />
                             </div>
                             <div className="col-auto">
@@ -249,8 +247,11 @@ export class LEditor extends Component {
                                         <DragDropContext onDragEnd={onDragEndAttributespec}>
                                             <Droppable droppableId="droppableAttributespecs">
                                                 {(provided) => (
-                                                    <Container ref={provided.innerRef} {...provided.droppableProps}>
-                                                        {attributespecs.map((t, i) => (
+                                                    <Container
+                                                        ref={provided.innerRef}
+                                                        {...provided.droppableProps}
+                                                    >
+                                                        {orderAttributespecs.map((t, i) => (
                                                             <Draggable key={t.id} draggableId={`attr_${t.id}`} index={i}>
                                                                 {(p) => (
                                                                     <div>
@@ -291,31 +292,42 @@ export class LEditor extends Component {
 }
 
 LEditor.propTypes = {
-    // show: PropTypes.bool.isRequired,
-    // project_id: PropTypes.number.isRequired,
-    // project_name: PropTypes.string.isRequired,
-    // project_users: PropTypes.shape({
-    //     in: PropTypes.array,
-    //     all: PropTypes.array,
-    // }).isRequired,
-    // parentCallHide: PropTypes.func.isRequired,
-
-    editingLabelID: PropTypes.number.isRequired,
-    editingSpecID: PropTypes.number.isRequired,
-    labelName: PropTypes.string.isRequired,
-    attributespecName: PropTypes.string.isRequired,
-    attributespec: PropTypes.shape(PropTypes.any).isRequired,
-    attributespecs: PropTypes.arrayOf(PropTypes.any).isRequired,
-    onDragEndAttributespec: PropTypes.func.isRequired,
     onCloseLabelEditor: PropTypes.func.isRequired,
+
+    openSpecEdit: PropTypes.bool.isRequired,
     onOpenSpecEditor: PropTypes.func.isRequired,
     onCloseSpecEditor: PropTypes.func.isRequired,
 
-
-    onChangeAttrText: PropTypes.func.isRequired,
-    onChangeInputText: PropTypes.func.isRequired,
+    // editingLabelID: PropTypes.number.isRequired, // merge  label
+    // labelName: PropTypes.string.isRequired, // merge label
+    label: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        project: PropTypes.number.isRequired,
+        order: PropTypes.number.isRequired,
+    }).isRequired,
+    onChangeLabelValue: PropTypes.func.isRequired, // on modify label
     onCreateLabel: PropTypes.func.isRequired,
+    onSaveLabel: PropTypes.func.isRequired,
+
+    orderAttributespecs: PropTypes.arrayOf(PropTypes.any).isRequired,
+    onDragEndAttributespec: PropTypes.func.isRequired,
+
+    // editingSpecID: PropTypes.number.isRequired,
+    // attributespecName: PropTypes.string.isRequired,
+    attributespec: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        mutable: PropTypes.bool.isRequired,
+        attrtype: PropTypes.string.isRequired,
+        default_value: PropTypes.string.isRequired,
+        values: PropTypes.string.isRequired,
+        label: PropTypes.number.isRequired,
+        order: PropTypes.number.isRequired,
+    }).isRequired,
+    onChangeAttributeSpecValue: PropTypes.func.isRequired, // on modify attribute
     onCreateAttributeSpec: PropTypes.func.isRequired,
+    onSaveAttributeSpec: PropTypes.func.isRequired,
 };
 
 export default connect(null, {})(LEditor);

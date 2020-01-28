@@ -83,27 +83,30 @@ export class Dashboard extends Component {
             annotators: { in: [], all: [] },
             selectedAnnotators: [],
 
-            labels: [],
-            reOrderLabels: [],
-
             openLEdit: false,
-            labelName: '',
-            attributespecName: '',
+            openSpecEdit: false,
+
+            label: {
+                id: -1,
+                name: '',
+                project: -1,
+                order: 99,
+            },
+            orderLabels: [],
+
             attributespec: {
+                id: -1,
                 name: '',
                 mutable: true,
                 attrtype: '',
                 default_value: '',
                 values: '',
                 label: -1,
+                order: 99,
             },
-            attributespecs: [],
-            attributespecsTemp: [],
+            orderAttributespecs: [],
 
-            editingLabelID: -1,
-            editingSpecID: -1,
-
-
+            tmpIndex: 0,
         };
     }
 
@@ -116,7 +119,15 @@ export class Dashboard extends Component {
         this.setState({ [e.target.name]: e.target.value });
     }
 
-    onChangeAttrText = (e) => {
+    onChangeLabelValue = (e) => {
+        const { label } = this.state;
+        console.log('label', label, e.target.name);
+
+        const newLabel = { ...label, [e.target.name]: e.target.value };
+        this.setState({ label: newLabel });
+    }
+
+    onChangeAttributeSpecValue = (e) => {
         const { attributespec } = this.state;
         console.log('attributespec', attributespec, e.target.name);
 
@@ -167,23 +178,29 @@ export class Dashboard extends Component {
                 project_id: id,
                 project_name: name,
                 annotators: res.data,
-                labels: res2.data,
-                reOrderLabels: res2.data,
                 selectedAnnotators: res.data.in,
 
                 openLEdit: false,
-                labelName: '',
-                attributespecName: '',
+                openSpecEdit: false,
+
+                label: {
+                    id: -1,
+                    name: '',
+                    project: -1,
+                    order: 99,
+                },
+                orderLabels: res2.data,
                 attributespec: {
+                    id: -1,
                     name: '',
                     mutable: true,
                     attrtype: '',
                     default_value: '',
                     values: '',
                     label: -1,
+                    order: 99,
                 },
-                openSpecEdit: false,
-                editingLabelID: -1,
+                orderAttributespecs: [],
             });
         }
     }
@@ -205,25 +222,26 @@ export class Dashboard extends Component {
 
     async getLabelAttributespecs(id) {
         if (id) {
-            const { labels } = this.state;
+            const { orderLabels } = this.state;
             const res = await axios.get(`/api/v1/attributespecs/?label=${id}`);
-            const label = labels.find((item) => item.id === id);
+            console.log('attr', res.data);
+            const label = orderLabels.find((item) => item.id === id);
             this.setState({
                 openLEdit: true,
                 openSpecEdit: false,
-                editingLabelID: id,
-                labelName: label.name,
-                attributespecName: '',
+
+                label,
                 attributespec: {
+                    id: -1,
                     name: '',
                     mutable: true,
                     attrtype: '',
                     default_value: '',
                     values: '',
                     label: -1,
+                    order: 99,
                 },
-                attributespecs: res.data,
-                attributespecsTemp: res.data,
+                orderAttributespecs: res.data,
             });
         }
     }
@@ -231,65 +249,84 @@ export class Dashboard extends Component {
     onOpenLabelEditor = (e, id) => {
         e.stopPropagation();
         if (id > -1) {
+            // for modfify exist label
             this.getLabelAttributespecs(id);
         } else {
+            // for create new label default
             this.setState({
                 openLEdit: true,
                 openSpecEdit: false,
-                editingLabelID: -1,
-                labelName: '',
-                attributespecName: '',
+
+                label: {
+                    id: -1,
+                    name: '',
+                    project: -1,
+                    order: 99,
+                },
                 attributespec: {
+                    id: -1,
                     name: '',
                     mutable: true,
                     attrtype: '',
                     default_value: '',
                     values: '',
                     label: -1,
+                    order: 99,
                 },
-                attributespecs: [],
-                attributespecsTemp: [],
+                orderAttributespecs: [],
             });
         }
     }
 
     onCloseLabelEditor = () => {
-        // this.getUsers(id, name);
         this.setState({
             openLEdit: false,
-            labelName: '',
-            attributespecName: '',
+            openSpecEdit: false,
+
+            label: {
+                id: -1,
+                name: '',
+                project: -1,
+                order: 99,
+            },
             attributespec: {
+                id: -1,
                 name: '',
                 mutable: true,
                 attrtype: '',
                 default_value: '',
                 values: '',
                 label: -1,
+                order: 99,
             },
-            openSpecEdit: false,
+            orderAttributespecs: [],
         });
     }
 
     onOpenSpecEditor = (e, id) => {
         e.stopPropagation();
-        if (id > -1) {
+        const { orderAttributespecs } = this.state;
+        if (id !== -1) {
+            // for modfify exist attr
+            const attributespec = orderAttributespecs.find((item) => item.id === id);
             this.setState({
                 openSpecEdit: true,
-                editingSpecID: id,
+                attributespec,
+            });
+        } else {
+            this.setState({
+                // for create new attr default
+                openSpecEdit: true,
                 attributespec: {
+                    id: -1,
                     name: '',
                     mutable: true,
                     attrtype: '',
                     default_value: '',
                     values: '',
                     label: -1,
+                    order: 99,
                 },
-            });
-        } else {
-            this.setState({
-                openSpecEdit: true,
-                editingSpecID: -1,
             });
         }
     }
@@ -299,12 +336,14 @@ export class Dashboard extends Component {
         this.setState({
             openSpecEdit: false,
             attributespec: {
+                id: -1,
                 name: '',
                 mutable: true,
                 attrtype: '',
                 default_value: '',
                 values: '',
                 label: -1,
+                order: 99,
             },
         });
     }
@@ -315,10 +354,22 @@ export class Dashboard extends Component {
         if (!destination) {
             return;
         }
-        const { reOrderLabels } = this.state;
-        const [remove] = reOrderLabels.splice(source.index, 1);
-        reOrderLabels.splice(destination.index, 0, remove);
-        this.setState({ reOrderLabels });
+        const { orderLabels, label } = this.state;
+        const [remove] = orderLabels.splice(source.index, 1);
+        orderLabels.splice(destination.index, 0, remove);
+        orderLabels.forEach((item, index, array) => {
+            item.order = index + 1;
+            if (item.id === label.id) {
+                label.order = item.order;
+            }
+        });
+        this.setState({ orderLabels });
+    }
+
+    onSaveOrder = async () => {
+        const { orderLabels } = this.state;
+        const res = await axios.post('/api/v1/labels/updateOrder/', { labels: orderLabels });
+        console.log('response', res);
     }
 
     onDragEndAttributespec = (result) => {
@@ -326,10 +377,16 @@ export class Dashboard extends Component {
         if (!destination) {
             return;
         }
-        const { attributespecs } = this.state;
-        const [remove] = attributespecs.splice(source.index, 1);
-        attributespecs.splice(destination.index, 0, remove);
-        this.setState({ attributespecs });
+        const { orderAttributespecs, attributespec } = this.state;
+        const [remove] = orderAttributespecs.splice(source.index, 1);
+        orderAttributespecs.splice(destination.index, 0, remove);
+        orderAttributespecs.forEach((item, index, array) => {
+            item.order = index + 1;
+            if (item.id === attributespec.id) {
+                attributespec.order = item.order;
+            }
+        });
+        this.setState({ orderAttributespecs });
     }
 
     handleChangePanel = (panel) => {
@@ -345,50 +402,100 @@ export class Dashboard extends Component {
         }
     }
 
+    createWithAttrSpecs = async () => {
+        console.log('on createWithAttrSpecs');
+        const {
+            project_id, label, orderLabels, orderAttributespecs,
+        } = this.state;
+        if (label.id === -1 && label.name !== '') {
+            console.log('create new label with orderAttributespecs');
+            label.project = project_id;
+            label.order = orderLabels.length + 1;
+            const formData = { label, attributespecs: orderAttributespecs };
+            console.log('formData', formData);
+            const res = await axios.post('/api/v1/labels/createWithAttrSpec/', formData);
+            console.log('response', res);
+            this.setState({
+                orderLabels: res.data.labels,
+                orderAttributespecs: res.data.attributespecs,
+                openLEdit: false,
+                openSpecEdit: false,
+
+                // label: res.data.label,
+            });
+        } else if (label.id > -1 && label.name !== '') {
+            console.log('update old label with orderAttributespecs');
+            const formData = { label, attributespecs: orderAttributespecs };
+            console.log('formData', formData);
+            const res = await axios.post('/api/v1/labels/createWithAttrSpec/', formData);
+            console.log('response', res);
+            this.setState({
+                orderLabels: res.data.labels,
+                orderAttributespecs: res.data.attributespecs,
+                openLEdit: false,
+                openSpecEdit: false,
+
+                // label: res.data.label,
+            });
+        } else {
+            console.log('need use saveAttributeSpec');
+        }
+    }
+
     onCreateLabel = () => {
         this.createWithAttrSpecs();
+    }
+
+    onSaveLabel = () => {
+        this.createWithAttrSpecs();
+        console.log('on onSaveLabel');
+    }
+
+    createAttrSpec = () => {
+        console.log('on createAttrSpec');
+        const {
+            label, orderAttributespecs, attributespec, tmpIndex,
+        } = this.state;
+        if (attributespec.id === -1) {
+            console.log('attributespec id', attributespec.id);
+            attributespec.id = `tmp_${tmpIndex}`;
+            attributespec.label = label.id;
+            attributespec.order = orderAttributespecs.length + 1;
+            const newTmpIndex = tmpIndex + 1;
+            const newOrderAttributespecs = [...orderAttributespecs, attributespec];
+            console.log('attributespec will change id to add in orderAttributespecs');
+            this.setState({
+                orderAttributespecs: newOrderAttributespecs,
+                tmpIndex: newTmpIndex,
+                openSpecEdit: false,
+            });
+        } else {
+            console.log('u cannot in this, need use saveAttributeSpec');
+        }
     }
 
     onCreateAttributeSpec = () => {
         this.createAttrSpec();
     }
 
-    async createWithAttrSpecs() {
-        const { project_id, labelName, attributespecsTemp, labels, reOrderLabels } = this.state;
-        if (labelName) {
-            const formData = { label: { name: labelName, project: project_id }, attributespecs: attributespecsTemp };
-            console.log('formData', formData);
-            const res = await axios.post('/api/v1/labels/createWithAttrSpec/', formData);
-            console.log('res', res);
+    onSaveAttributeSpec = () => {
+        console.log('on saveAttributeSpec');
+        const {
+            orderAttributespecs, attributespec,
+        } = this.state;
+        if (attributespec.id === -1) {
+            console.log('u cannot in this, need use createAttrSpec');
+        } else {
+            const newOrderAttributespecs = orderAttributespecs.map((attrSpec) => {
+                if (attrSpec.id === attributespec.id) { return attributespec; } return attrSpec;
+            });
             this.setState({
-                labels: [...labels, res.data.label],
-                reOrderLabels: [...reOrderLabels, res.data.label],
-
-                // openLEdit: false,
-                // labelName: '',
-                // openSpecEdit: false,
-                // editingLabelID: -1,
+                orderAttributespecs: newOrderAttributespecs,
+                openSpecEdit: false,
             });
         }
     }
 
-    async createAttrSpec() {
-        const { editingLabelID, attributespec, attributespecs, attributespecsTemp } = this.state;
-        if (editingLabelID > -1) {
-            // const formData = { ...attributespec, label: editingLabelID };
-            // console.log('formData', formData);
-            // const res = await axios.post('/api/v1/attributespecs/', formData);
-            // console.log('res', res);
-
-        }
-        this.setState({
-            attributespecsTemp: [...attributespecsTemp, { ...attributespec, label: `new_${editingLabelID}` }],
-            // openLEdit: false,
-            // labelName: '',
-            // openSpecEdit: false,
-            // editingLabelID: -1,
-        });
-    }
 
     render() {
         const {
@@ -396,10 +503,10 @@ export class Dashboard extends Component {
             expanded, project_newname,
             rename, project_rename,
             edit, annotators, selectedAnnotators,
-            labels, reOrderLabels,
-            openLEdit, attributespecs, attributespecsTemp, labelName, attributespec, attributespecName,
-            openSpecEdit,
-            editingLabelID, editingSpecID,
+
+            openLEdit, openSpecEdit,
+            label, orderLabels,
+            attributespec, orderAttributespecs,
         } = this.state;
         let projectPanel = null;
 
@@ -449,7 +556,6 @@ export class Dashboard extends Component {
         }
 
         return (
-
             <div className="container-fluid p-0">
                 <div className="row" style={{ maxHeight: 'calc(100vh - 56px)', minHeight: 'calc(100vh - 56px)' }}>
                     <div
@@ -531,61 +637,40 @@ export class Dashboard extends Component {
                             show={edit}
                             project_id={project_id}
                             project_name={project_name}
+                            onHide={this.onCloseEditor}
                             annotators={annotators}
                             selectedAnnotators={selectedAnnotators}
-                            reOrderLabels={reOrderLabels}
-                            onHide={this.onCloseEditor}
                             onChangeAnnotators={this.onChangeAnnotators}
                             onResetAnnotators={this.onResetAnnotators}
 
+                            orderLabels={orderLabels}
                             onDragEndLabel={this.onDragEndLabel}
-                            onDragEndAttributespec={this.onDragEndAttributespec}
+                            onSaveOrder={this.onSaveOrder}
 
                             openLEdit={openLEdit}
-                            labelName={labelName}
-                            attributespecName={attributespecName}
-                            attributespec={attributespec}
-                            editingLabelID={editingLabelID}
-                            attributespecs={attributespecsTemp}
                             onOpenLabelEditor={this.onOpenLabelEditor}
                             onCloseLabelEditor={this.onCloseLabelEditor}
 
                             openSpecEdit={openSpecEdit}
-                            editingSpecID={editingSpecID}
                             onOpenSpecEditor={this.onOpenSpecEditor}
                             onCloseSpecEditor={this.onCloseSpecEditor}
 
-                            onChangeAttrText={this.onChangeAttrText}
-                            onChangeInputText={this.onChange}
+                            label={label}
+                            onChangeLabelValue={this.onChangeLabelValue}
                             onCreateLabel={this.onCreateLabel}
+                            onSaveLabel={this.onSaveLabel}
+
+                            orderAttributespecs={orderAttributespecs}
+                            onDragEndAttributespec={this.onDragEndAttributespec}
+
+                            attributespec={attributespec}
+                            onChangeAttributeSpecValue={this.onChangeAttributeSpecValue}
                             onCreateAttributeSpec={this.onCreateAttributeSpec}
-
-
+                            onSaveAttributeSpec={this.onSaveAttributeSpec}
                         />
                     </div>
                 </div>
-                {/* <br />
-                    <div className="row">
-                        <Form />
-                    </div>
-                    <div className="row">
-                        <Projects onShowEdit={this.handleShowEdit} />
-                    </div>
-                    <div className="row">
-                        <div className="container">
-                            <Editor
-                                show={edit}
-                                project_id={project_id}
-                                project_name={project_name}
-                                project_users={project_users}
-                                labels={labels}
-                                parentCallHide={this.handleCloseEdit}
-                            />
-                        </div>
-                    </div> */}
-
             </div>
-
         );
     }
 }
