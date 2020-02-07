@@ -25,3 +25,10 @@ export const ADD_TASK = "ADD_TASK";
 
 
 export const GET_ANNOTATIONS = "GET_ANNOTATIONS";
+export const GET_LABELS = "GET_LABELS";
+
+
+// -------------------------
+export const CHANGE_LABEL = "CHANGE_LABEL";
+export const CHANGE_ATTR = "CHANGE_ATTR";
+export const SELECT_OBJECT = "SELECT_OBJECT";

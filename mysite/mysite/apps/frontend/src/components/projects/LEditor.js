@@ -129,26 +129,49 @@ export class LEditor extends Component {
                                     value={attributespec.attrtype}
                                     onChange={onChangeAttributeSpecValue}
                                 >
-                                    <option value="select">select</option>
+                                    <option value="checkbox">checkbox</option>
+                                    <option value="radio">radio</option>
                                     <option value="text">text</option>
                                     <option value="number">number</option>
+                                    <option value="select">select</option>
+                                    <option value="multiselect">multiselect</option>
                                 </Select>
                             </div>
-
                         </div>
-                        <div className="row">
+                        <div className="row align-items-center pb-2">
                             {/* ToDo */}
                             {/* Select decide this content  */}
+                            <div className="col-auto">
+                                DefaultValue
+                            </div>
                             <div className="col">
-                                Value
+                                <input
+                                    type="text"
+                                    id="attributespecDefaultValue"
+                                    name="default_value"
+                                    placeholder="default value"
+                                    style={{ maxWidth: '100%' }}
+                                    value={attributespec.default_value}
+                                    onChange={onChangeAttributeSpecValue}
+                                />
+                            </div>
+                        </div>
+                        <div className="row align-items-center pb-2">
+                            {/* ToDo */}
+                            {/* Select decide this content  */}
+                            <div className="col-auto">
+                                Options
                             </div>
                             <div className="col">
                                 <TextField
-                                    id="outlined-multiline-static2"
+                                    id="attributespecValues"
                                     multiline
                                     rows="8"
                                     variant="outlined"
+                                    name="values"
                                     style={{ width: '100%', background: 'white' }}
+                                    value={attributespec.values}
+                                    onChange={onChangeAttributeSpecValue}
                                 />
                             </div>
                         </div>

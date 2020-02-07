@@ -3,7 +3,7 @@
 
 from rest_framework import viewsets
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.filters import OrderingFilter
@@ -29,6 +29,15 @@ import json
 
 SHARE_ROOT = '/home/jeff/Work/ShareRoot'
 
+
+def convertAttribute(attribute):
+    return {'name':attribute['name'],
+            'mutable':attribute['mutable'],
+            'attrtype':attribute['attrtype'],
+            'default_value':attribute['default_value'],
+            'values': [attribute['values'][0].lower() != 'false'] if (attribute['attrtype'] == 'checkbox') else attribute['values'],
+            'order':attribute['order'],
+            }
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
@@ -127,6 +136,31 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 return Response({'batch': serializer.data, 'tasks': serializer2.data})
             else:
                 return Response("you have not any batch in this pack, should use post method", status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['GET'])
+    def labels(self, request, pk):
+        queryset = Project.objects.prefetch_related(
+            "label_set__attributespec_set",
+        ).filter(id=pk).first()
+
+        labels = LabelSerializer(queryset.label_set.all(),many=True)
+
+        # print('queryset', labels.data)
+
+        labelsData = {}
+
+        for label in labels.data:
+            labelsData[label['id']] = {
+                'name': label['name'],
+                'attributes': {},
+            }
+            for attribute in label['attributes']:
+                tmp = convertAttribute(attribute)
+                labelsData[label['id']]['attributes'][attribute['id']] = tmp
+        
+        print('labelsData',labelsData)
+
+        return Response({'labelsData':labelsData})
 
 
 class PackViewSet(viewsets.ModelViewSet):
@@ -264,17 +298,6 @@ class VideoViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED,
                             headers=headers)
 
-    @action(detail=False, methods=['GET'])
-    def annotations(self, request):
-        print('sssss')
-
-        data = [{'name': 'firstobj', 'type': 'car', 'id': 0},
-                {'name': 'secondobj', 'type': 'bike', 'id': 1},
-                {'name': 'thirdobj', 'type': 'people', 'id': 2}, ]
-        headers = self.get_success_headers(data)
-        return Response(data, status=status.HTTP_201_CREATED,
-                        headers=headers)
-
 
 class TaskFilter(filters.FilterSet):
     batch = filters.NumberFilter(
@@ -290,6 +313,17 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     filter_backends = [filters.DjangoFilterBackend]
     filter_class = TaskFilter
+
+    @action(detail=False, methods=['GET'])
+    def annotations(self, request):
+        print('sssss')
+
+        data = [{'id': 0, 'frame':0, 'shapetype':'rectangle', 'point':'10,10,50,50', 'label':1,'attrs':{'1':'false','2':'1'}},
+        {'id': 1, 'frame':0, 'shapetype':'rectangle', 'point':'100,100,150,150', 'label':1,'attrs':{'1':'true','2':'2'}},
+        {'id': 2, 'frame':0, 'shapetype':'rectangle', 'point':'210,210,250,250', 'label':1,'attrs':{'1':'false','2':'3'}},]
+        headers = self.get_success_headers(data)
+        return Response(data, status=status.HTTP_201_CREATED,
+                        headers=headers)
 
 
 class LabelFilter(filters.FilterSet):
@@ -321,7 +355,7 @@ class LabelViewSet(viewsets.ModelViewSet):
         if srcLabel['id'] == -1:
             # create label
             label = Label.objects.create(
-                name=srcLabel['name'], project_id=srcLabel['project'])
+                name=srcLabel['name'], project_id=srcLabel['project'], order=srcLabel['order'])
         else:
             print("label need use save")
             # save label
@@ -381,11 +415,16 @@ class LabelViewSet(viewsets.ModelViewSet):
         labels = Label.objects.filter(
             project_id=srcLabel['project']).order_by('order')
 
+        print('serializer')
         serializer = LabelSerializer(label, context={"request": request})
+        print('serializer1')
         serializer1 = LabelSerializer(
             labels, many=True, context={"request": request})
+        a=serializer1.data
+        print('serializer2')
         serializer2 = AttributeSpecSerializer(
             attributespecs, many=True, context={"request": request})
+        a=serializer2.data
 
         return Response({'labels': serializer1.data, 'attributespecs': serializer2.data})
 

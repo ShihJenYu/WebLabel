@@ -67,8 +67,7 @@ export class AttributeInput extends Component {
     }
 
     componentDidUpdate() {
-        console.log('componentDidUpdate in MultipleSelect');
-        console.log(this.state);
+
     }
 
     handleEnter = (e) => {
@@ -85,26 +84,29 @@ export class AttributeInput extends Component {
         });
     }
 
-    onChange = (e) => {
-        this.setState({ [e.target.name]: e.target.value });
-        console.log(this.state);
+    handleChange = (e) => {
+        const { onChange } = this.props;
+        // this.setState({ [e.target.name]: e.target.value });
+        onChange(e);
     }
 
 
     render() {
-        const { data, tipOpen } = this.state;
-        const { params } = this.props;
+        // const { data, tipOpen } = this.state;
+        const { tipOpen } = this.state;
+        const { params, value } = this.props;
 
         return (
             <div style={{ height: '24px' }}>
-                <Tooltip title={data} arrow open={tipOpen}>
+                {/* <Tooltip title={data} arrow open={tipOpen}> */}
+                <Tooltip title={value} arrow open={tipOpen}>
                     <BootstrapInput
                         inputProps={params}
                         onMouseEnter={this.handleEnter}
                         onMouseLeave={this.handleLeave}
-                        onChange={this.onChange}
-                        name="data"
-                        value={data}
+                        onChange={this.handleChange}
+                        name="value"
+                        value={value}
                     />
                 </Tooltip>
             </div>
@@ -115,10 +117,14 @@ export class AttributeInput extends Component {
 
 AttributeInput.defaultProps = {
     params: {},
+    onChange: () => { },
+    value: '',
 };
 
 AttributeInput.propTypes = {
     params: PropTypes.object,
+    onChange: PropTypes.func,
+    value: PropTypes.any,
 };
 
 export default connect(null, {})(AttributeInput);

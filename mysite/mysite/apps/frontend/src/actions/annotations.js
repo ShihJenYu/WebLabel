@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 import {
-    GET_ANNOTATIONS,
+    GET_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
 } from './types';
 
 // GET PROJECTS
 export const getAnnotations = () => (dispatch) => {
     console.log('in get annotations');
     axios
-        .get('/api/v1/videos/annotations')
+        .get('/api/v1/tasks/annotations')
         .then((res) => {
             dispatch({
                 type: GET_ANNOTATIONS,
@@ -16,38 +16,42 @@ export const getAnnotations = () => (dispatch) => {
             });
         })
         .catch((err) => console.log(err));
-    // }; {
-    //     // axios
-    //     //     .get('/api/v1/projects/')
-    //     //     .then((res) => {
-    //     //         dispatch({
-    //     //             type: GET_ANNOTATIONS,
-    //     //             payload: res.data,
-    //     //         });
-    //     //     })
-    //     //     .catch((err) => console.log(err));
-    //     // dispatch();
-    //     console.log('in get annotations action');
-    //     return {
-    //         type: GET_ANNOTATIONS,
-    //         payload: [
-    //             { name: 'firstobj', type: 'car', id: 0 },
-    //             { name: 'secondobj', type: 'bike', id: 1 },
-    //             { name: 'thirdobj', type: 'people', id: 2 },
-    //         ],
-    //     };
 };
 
 
-// GET PROJECTVIDEOS
-export const getProjectVideos = (id) => (dispatch) => {
+// GET LABELS
+export const getLabels = (id) => (dispatch) => {
     axios
-        .get(`/api/v1/videos/?project=${id}`)
+        .get(`/api/v1/projects/${id}/labels/`)
         .then((res) => {
             dispatch({
-                type: GET_ANNOTATIONS,
+                type: GET_LABELS,
                 payload: res.data,
             });
         })
         .catch((err) => console.log(err));
+};
+
+
+// CHANGE LABEL
+export const changeLabel = (objID, labelID, attrs) => (dispatch) => {
+    dispatch({
+        type: CHANGE_LABEL,
+        payload: { objID, labelID, attrs },
+    });
+};
+
+// CHANGE Attr
+export const changeAttr = (objID, attrID, attrValue) => (dispatch) => {
+    dispatch({
+        type: CHANGE_ATTR,
+        payload: { objID, attrID, attrValue },
+    });
+};
+
+export const selectObject = (id) => (dispatch) => {
+    dispatch({
+        type: SELECT_OBJECT,
+        payload: { id },
+    });
 };

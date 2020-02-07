@@ -107,7 +107,7 @@ class Label(models.Model):
 class AttributeSpec(models.Model):
     TYPE_CHOICES = (
         ('checkbox', 'checkbox'),
-        ('radio', 'radio'),
+        # ('radio', 'radio'),
         ('text', 'text'),
         ('number', 'number'),
         ('select', 'select'),
@@ -149,10 +149,10 @@ class Annotation(models.Model):
 
 class Shape(models.Model):
     TYPE_CHOICES = (
-        ('RECTANGLE', 'rectangle'),
-        ('POLYGON', 'polygon'),
-        ('POLYLINE', 'polyline'),
-        ('POINTS', 'points'),
+        ('rectangle', 'rectangle'),
+        ('polygon', 'polygon'),
+        ('polyline', 'polyline'),
+        ('points', 'points'),
     )
     # RECTANGLE = 'rectangle' # (x0, y0, x1, y1)
     # POLYGON = 'polygon'     # (x0, y0, ..., xn, yn)

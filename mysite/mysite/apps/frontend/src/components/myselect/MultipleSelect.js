@@ -53,20 +53,20 @@ const MenuProps = {
 };
 
 // TODO use prop passing
-const items = [
-    'Oliver Hansen',
-    'Van HenryHenryHenry AAAA',
-    'April Tucker',
-    'Ralph Hubbard',
-    'Omar Alexander',
-    'Carlos Abbott',
-    'Miriam Wagner',
-    'Bradley Wilkerson',
-    'Virginia Andrews',
-    'somosmaodmoasmdoasdakdasdasdadada',
-    'weewweweewewewewewewewe',
-    'aa',
-];
+// const items = [
+//     'Oliver Hansen',
+//     'Van HenryHenryHenry AAAA',
+//     'April Tucker',
+//     'Ralph Hubbard',
+//     'Omar Alexander',
+//     'Carlos Abbott',
+//     'Miriam Wagner',
+//     'Bradley Wilkerson',
+//     'Virginia Andrews',
+//     'somosmaodmoasmdoasdakdasdasdadada',
+//     'weewweweewewewewewewewe',
+//     'aa',
+// ];
 
 // const classes = useStyles();
 
@@ -81,56 +81,54 @@ export class MultipleSelect extends Component {
     }
 
     componentDidUpdate() {
-        console.log('componentDidUpdate in MultipleSelect');
-        console.log(this.state);
     }
 
     handleChange = (e) => {
+        const { onChange } = this.props;
         console.log('handleChange', e.target.value);
-        this.setState({
-            selectedValue: e.target.value,
-        });
+        // this.setState({
+        //     selectedValue: e.target.value,
+        // });
+        onChange(e);
     }
 
     handleEnter = (e) => {
-        console.log('handleOpen', e.target.value);
         this.setState({
             tipOpen: true,
         });
     }
 
     handleLeave = (e) => {
-        console.log('handleOpen', e.target.value);
         this.setState({
             tipOpen: false,
         });
     }
 
     handleOpen = (e) => {
-        console.log('handleOpen', e.target.value);
+        // console.log('handleOpen', e.target.value);
         this.setState({
             tipOpen: false,
         });
     }
 
     render() {
-        const { selectedValue, tipOpen } = this.state;
-        const { classes, multiple } = this.props;
-        console.log('selectedValue', selectedValue);
-        const titleStr = (typeof selectedValue === 'string') ? selectedValue : selectedValue.join(', ');
+        // const { selectedValue, tipOpen } = this.state;
+        const { tipOpen } = this.state;
+        const { classes, multiple, blank, items, value } = this.props;
+        // const titleStr = (typeof selectedValue === 'string') ? selectedValue : selectedValue.join(', ');
+        const titleStr = (typeof value === 'string') ? value : value.join(', ');
 
-        console.log('content,', 'content');
         let content = [];
 
-        console.log('content,', content);
         if (multiple) {
             content = items.map((item) => (
                 <MenuItem style={{ padding: '0px 10px' }} key={item} value={item}>
-                    <Checkbox size="small" style={{ padding: '0px 10px 0px 0px' }} checked={selectedValue.indexOf(item) > -1} />
+                    {/* <Checkbox size="small" style={{ padding: '0px 10px 0px 0px' }} checked={selectedValue.indexOf(item) > -1} /> */}
+                    <Checkbox size="small" style={{ padding: '0px 10px 0px 0px' }} checked={value.indexOf(item) > -1} />
                     <ListItemText primary={item} />
                 </MenuItem>
             ));
-        } else {
+        } else if (blank) {
             content = [(
                 <MenuItem style={{ padding: '0px 10px' }} key="" value="">
                     <ListItemText primary="None" />
@@ -140,6 +138,12 @@ export class MultipleSelect extends Component {
                     <ListItemText primary={item} />
                 </MenuItem>
             )))];
+        } else {
+            content = items.map((item) => (
+                <MenuItem style={{ padding: '0px 10px' }} key={item} value={item}>
+                    <ListItemText primary={item} />
+                </MenuItem>
+            ));
         }
         return (
             <div>
@@ -150,14 +154,15 @@ export class MultipleSelect extends Component {
                             // labelId="demo-mutiple-checkbox-label"
                             // id="demo-mutiple-checkbox"
                             multiple={multiple}
-                            value={selectedValue}
+                            // value={selectedValue}
+                            value={value}
                             onChange={this.handleChange}
                             onMouseEnter={this.handleEnter}
                             onMouseLeave={this.handleLeave}
                             onOpen={this.handleOpen}
                             // input={<Input />}
                             style={{ fontSize: '10px' }}
-                            renderValue={(selected) => ((typeof selected === 'string') ? selected : selected.join(', '))}
+                            renderValue={(selected) => ((typeof selected === 'string') ? selected : selected.join('; '))}
                             MenuProps={MenuProps}
                         >
                             {content}
@@ -173,11 +178,19 @@ export class MultipleSelect extends Component {
 
 MultipleSelect.defaultProps = {
     multiple: false,
+    blank: false,
+    items: [],
+    value: [],
+    onChange: () => { },
 };
 
 MultipleSelect.propTypes = {
     classes: PropTypes.object.isRequired,
     multiple: PropTypes.bool,
+    blank: PropTypes.bool,
+    items: PropTypes.arrayOf(PropTypes.any),
+    value: PropTypes.arrayOf(PropTypes.any),
+    onChange: PropTypes.func,
 };
 
 // const mapStateToProps = () => ({

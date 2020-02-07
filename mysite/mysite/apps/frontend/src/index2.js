@@ -1,1 +1,1 @@
-import Annotation from './components/Annotation';
+import AnnotationMain from './components/AnnotationMain';

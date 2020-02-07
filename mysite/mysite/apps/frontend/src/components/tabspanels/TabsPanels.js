@@ -11,6 +11,7 @@ import {
 
 import ObjectsPanels from './ObjectsPanels';
 
+
 export class TabsPanels extends Component {
     constructor(props) {
         super(props);

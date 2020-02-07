@@ -13,7 +13,7 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import AttributesPanel from './AttributesPanel';
 
-import { getAnnotations } from '../../actions/annotations';
+import { selectObject } from '../../actions/annotations';
 
 
 export class TabsPanels extends Component {
@@ -25,8 +25,8 @@ export class TabsPanels extends Component {
     }
 
     componentDidMount() {
-        const { getAnnotations } = this.props;
-        getAnnotations();
+        // const { getAnnotations } = this.props;
+        // getAnnotations();
     }
 
     // 34px is right tab height, 25px is Accordion.Toggle height
@@ -81,8 +81,10 @@ export class TabsPanels extends Component {
     }
 
     handleButtonClick4 = (e, id) => {
+        const { selectObject } = this.props;
         e.stopPropagation();
         console.log('click4', id);
+        selectObject(id);
     }
 
     handleButtonClick5 = (e, id) => {
@@ -120,7 +122,7 @@ export class TabsPanels extends Component {
                             this.handleButtonClick2(e, annotatation.id);
                         }}
                     >
-                        {annotatation.type}
+                        {annotatation.id}
                         <IconButton className="float-right p-0" aria-label="delete" onClick={(e) => {
                             this.handleButtonClick3(e, annotatation.id);
                         }}
@@ -132,7 +134,7 @@ export class TabsPanels extends Component {
                         this.handleButtonClick4(e, annotatation.id);
                     }}
                     >
-                        <h5 className="card-title p-1 m-0">{annotatation.name}</h5>
+                        <h5 className="card-title p-1 m-0">{annotatation.shapetype}</h5>
                     </div>
                 </div >
             ));
@@ -177,7 +179,9 @@ export class TabsPanels extends Component {
                                     Click B!
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="0">
-                                    <Card.Body>Hello! I'm the B body</Card.Body>
+                                    <>
+                                        <Card.Body>Hello! I'm the B body</Card.Body>
+                                    </>
                                 </Accordion.Collapse>
                             </Card>
                         </Accordion>
@@ -200,9 +204,9 @@ export class TabsPanels extends Component {
 }
 
 TabsPanels.propTypes = {
-    getAnnotations: PropTypes.func.isRequired,
+    // getAnnotations: PropTypes.func.isRequired,
     annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
-
+    selectObject: PropTypes.func.isRequired,
     // getBatchs: PropTypes.func.isRequired,
     // deleteBatch: PropTypes.func.isRequired,
 };
@@ -211,4 +215,4 @@ const mapStateToProps = (state) => ({
     annotations: state.annotations.annotations,
 });
 
-export default connect(mapStateToProps, { getAnnotations })(TabsPanels);
+export default connect(mapStateToProps, { selectObject })(TabsPanels);

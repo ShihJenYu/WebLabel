@@ -124,13 +124,37 @@ class VideoSerializer(serializers.ModelSerializer):
         return video
 
 
-class LabelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Label
-        fields = '__all__'
-
-
 class AttributeSpecSerializer(serializers.ModelSerializer):
     class Meta:
         model = AttributeSpec
         fields = '__all__'
+
+    # def to_internal_value(self, data):
+    #     attribute = data.copy()
+    #     print('\n\n 1 to_internal_value', attribute)
+    #     attribute['values'] = '\n'.join(
+    #         map(lambda x: x.strip(), data.get('values', [])))
+    #     print('\n\n 2 to_internal_value', attribute)
+    #     return attribute
+
+    # def to_representation(self, instance):
+    #     if instance:
+    #         attribute = super().to_representation(instance)
+    #         print('\n\n 1 to_representation', attribute)
+    #         attribute['values'] = attribute['values'].split('\n')
+    #         print('\n\n 2 to_representation', attribute)
+    #     else:
+    #         attribute = instance
+    #         print('\n\n 3 to_representation', attribute)
+
+    #     return attribute
+
+
+class LabelSerializer(serializers.ModelSerializer):
+    attributes = AttributeSpecSerializer(many=True, source='attributespec_set',
+                                         default=[], required=False)
+
+    class Meta:
+        model = Label
+        # fields = '__all__'
+        fields = ('id', 'name', 'project', 'order', 'attributes')
