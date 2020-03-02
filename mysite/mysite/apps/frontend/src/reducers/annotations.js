@@ -1,19 +1,25 @@
 import {
     GET_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
+    CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH,
 } from '../actions/types';
 
 const initialStata = {
     annotations: [],
     labels: {},
+    maxID: -1,
     selectedObject: {},
+    defaultLabelID: null,
+    accordion1BodyH: null,
 };
 
 export default function (state = initialStata, action) {
     switch (action.type) {
         case GET_ANNOTATIONS:
+            console.log('sss', action.payload);
             return {
                 ...state,
-                annotations: action.payload,
+                annotations: action.payload.data,
+                maxID: action.payload.maxID,
             };
         case GET_LABELS:
             console.log('haHA', action.payload);
@@ -25,23 +31,40 @@ export default function (state = initialStata, action) {
             console.log('CHANGE_LABEL', action.payload);
             return {
                 ...state,
-                selectedObject: { ...state.selectedObject, label: action.payload.labelID, attrs: action.payload.attrs },
+                selectedObject: {
+                    ...state.selectedObject,
+                    label: action.payload.labelID,
+                    attrs: action.payload.attrs,
+                },
                 annotations: state.annotations.map((object) => {
                     if (object.id === action.payload.objID) {
-                        return { ...object, label: action.payload.labelID, attrs: action.payload.attrs };
+                        return {
+                            ...object, label: action.payload.labelID, attrs: action.payload.attrs,
+                        };
                     }
                     return object;
                 }),
             };
-        case CHANGE_ATTR: //objID, attrID, attrValue
+        case CHANGE_ATTR: // objID, attrID, attrValue
             console.log('CHANGE_ATTR', action.payload);
-            console.log({ ...state.selectedObject.attrs, [action.payload.attrID]: action.payload.attrValue });
             return {
                 ...state,
-                selectedObject: { ...state.selectedObject, attrs: { ...state.selectedObject.attrs, [action.payload.attrID]: action.payload.attrValue } },
+                selectedObject: {
+                    ...state.selectedObject,
+                    attrs: {
+                        ...state.selectedObject.attrs,
+                        [action.payload.attrID]: action.payload.attrValue,
+                    },
+                },
                 annotations: state.annotations.map((object) => {
                     if (object.id === action.payload.objID) {
-                        return { ...object, attrs: { ...object.attrs, [action.payload.attrID]: action.payload.attrValue } };
+                        return {
+                            ...object,
+                            attrs: {
+                                ...object.attrs,
+                                [action.payload.attrID]: action.payload.attrValue,
+                            },
+                        };
                     }
                     return object;
                 }),
@@ -52,7 +75,30 @@ export default function (state = initialStata, action) {
                 ...state,
                 selectedObject: state.annotations.find((item) => (item.id === action.payload.id)),
             };
-
+        case CHANGE_DEFAULTLABEL:
+            return {
+                ...state,
+                defaultLabelID: action.payload.labelID,
+            };
+        case CREATE_OBJECT:
+            return {
+                ...state,
+                annotations: [...state.annotations, action.payload.obj],
+                selectedObject: action.payload.obj,
+                maxID: state.maxID + 1,
+            };
+        case DELETE_OBJECT:
+            return {
+                ...state,
+                annotations: state.annotations.filter((object) => object.id !== action.payload),
+                selectedObject:
+                    (state.selectedObject.id === action.payload) ? {} : state.selectedObject,
+            };
+        case SET_ACCORDION1BODYH:
+            return {
+                ...state,
+                accordion1BodyH: action.payload,
+            };
         default:
             return state;
     }

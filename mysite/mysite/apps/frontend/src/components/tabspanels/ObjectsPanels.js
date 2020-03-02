@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import axios from 'axios';
-
 
 import {
     Accordion, Card,
@@ -13,34 +11,36 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import AttributesPanel from './AttributesPanel';
 
-import { selectObject } from '../../actions/annotations';
+import { selectObject, deleteObject } from '../../actions/annotations';
 
 
 export class TabsPanels extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            allHeight: 301, allHeightStr: 'calc(100vh - 301px)', aClose: false, bClose: false, cClose: false,
+            aClose: false, bClose: false, cClose: false,
         };
     }
 
     componentDidMount() {
-        // const { getAnnotations } = this.props;
-        // getAnnotations();
+    }
+
+    componentDidUpdate() {
+        console.log('didupdate', this.accordionAll.children[0].clientHeight);
     }
 
     // 34px is right tab height, 25px is Accordion.Toggle height
     // 'calc(100vh - 34px)'
     // 'calc(100vh - 301px)'  301 is tmp sample 267(include 3*(25+64))+34
 
+    // TODO need re calc
+
     handleCalc = (tag) => {
-        console.log('handleCalc');
+        console.log('handleCalc', tag);
         const { aClose, bClose, cClose } = this.state;
-        const minH = 25 * 3 + 34;
         let naClose = aClose;
         let nbClose = bClose;
         let ncClose = cClose;
-        let contentH = minH;
         if (tag === 'aClose') {
             naClose = !aClose;
         } else if (tag === 'bClose') {
@@ -49,16 +49,7 @@ export class TabsPanels extends Component {
             ncClose = !cClose;
         }
 
-        contentH += (naClose) ? 0 : 64;
-        contentH += (nbClose) ? 0 : 64;
-        contentH += (ncClose) ? 0 : 64;
-
-        // console.log(a, b, c);
-        // const total = a + b + c;
-
         this.setState({
-            allHeight: contentH,
-            allHeightStr: `calc(100vh - ${contentH}px)`,
             aClose: naClose,
             bClose: nbClose,
             cClose: ncClose,
@@ -76,8 +67,11 @@ export class TabsPanels extends Component {
     }
 
     handleButtonClick3 = (e, id) => {
+        const { deleteObject } = this.props;
         e.stopPropagation();
         console.log('click3', id);
+        // TODO need to delete obj on local
+        deleteObject(id);
     }
 
     handleButtonClick4 = (e, id) => {
@@ -99,12 +93,11 @@ export class TabsPanels extends Component {
     render() {
         const {
             allHeight,
-            allHeightStr,
             aClose,
             bClose,
             cClose,
         } = this.state;
-        const { annotations } = this.props;
+        const { annotations, labels, accordion1BodyH } = this.props;
         let objects = '';
         if (annotations) {
             objects = annotations.map((annotatation) => (
@@ -116,31 +109,48 @@ export class TabsPanels extends Component {
                         this.handleButtonClick(e, annotatation.id);
                     }}
                 >
-
                     <div
-                        className="card-header p-0" onClick={(e) => {
+                        className="card-header p-0"
+                        onClick={(e) => {
                             this.handleButtonClick2(e, annotatation.id);
                         }}
                     >
-                        {annotatation.id}
-                        <IconButton className="float-right p-0" aria-label="delete" onClick={(e) => {
-                            this.handleButtonClick3(e, annotatation.id);
-                        }}
+                        {`${annotatation.id} ${annotatation.shapetype}`}
+                        <IconButton
+                            className="float-right p-0"
+                            aria-label="delete"
+                            onClick={(e) => {
+                                this.handleButtonClick3(e, annotatation.id);
+                            }}
                         >
                             <CloseIcon />
                         </IconButton>
                     </div>
-                    <div className="card-body p-1" onClick={(e) => {
-                        this.handleButtonClick4(e, annotatation.id);
-                    }}
+                    <div
+                        className="card-body p-1"
+                        onClick={(e) => {
+                            this.handleButtonClick4(e, annotatation.id);
+                        }}
                     >
-                        <h5 className="card-title p-1 m-0">{annotatation.shapetype}</h5>
+                        <h5 className="card-title p-1 m-0">{labels[annotatation.label].name}</h5>
                     </div>
-                </div >
+                </div>
             ));
         }
 
         console.log('in render show allHeight', allHeight);
+        let hh = 157;
+        let hhstr = '100vh';
+        if (this.accordionAll) {
+            console.log('in render', this.accordionAll.children[0].clientHeight);
+            hh = 25 * 3 + 34;
+
+            hh += (aClose) ? 0 : accordion1BodyH;
+            hh += (bClose) ? 0 : 16;
+            hh += (cClose) ? 0 : 16;
+            hhstr = `calc(100vh - ${hh}px)`;
+        }
+
         return (
             <div className="container pt-0" style={{ background: 'antiquewhite' }}>
                 <div
@@ -148,8 +158,8 @@ export class TabsPanels extends Component {
                     style={{
                         background: 'darkgoldenrod',
                         overflowY: 'scroll',
-                        maxHeight: allHeightStr,
-                        minHeight: allHeightStr,
+                        maxHeight: hhstr,
+                        minHeight: hhstr, // allHeightStr,
                     }}
                 >
                     <div className="col" style={{ padding: '2px' }}>
@@ -158,12 +168,12 @@ export class TabsPanels extends Component {
                         {/* end a object component */}
                     </div>
                 </div>
-                <div className="row">
+                <div className="row" ref={(cell) => { this.accordionAll = cell; }}>
                     <div className="container p-0" style={{ background: 'black', position: 'absolute', bottom: '0' }}>
                         {/* start a tool panel component */}
                         <Accordion defaultActiveKey="0" ref={(cell) => { this.accordion1 = cell; }}>
                             <Card>
-                                <Accordion.Toggle onClick={() => { this.handleCalc('aClose', aClose); }} className="py-0" as={Card.Header} eventKey="0">
+                                <Accordion.Toggle onClick={() => { this.handleCalc('aClose'); }} className="py-0" as={Card.Header} eventKey="0">
                                     Click A!
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="0">
@@ -175,24 +185,22 @@ export class TabsPanels extends Component {
 
                         <Accordion defaultActiveKey="0" ref={(cell) => { this.accordion2 = cell; }}>
                             <Card>
-                                <Accordion.Toggle onClick={() => { this.handleCalc('bClose', bClose); }} className="py-0" as={Card.Header} eventKey="0">
+                                <Accordion.Toggle onClick={() => { this.handleCalc('bClose'); }} className="py-0" as={Card.Header} eventKey="0">
                                     Click B!
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="0">
-                                    <>
-                                        <Card.Body>Hello! I'm the B body</Card.Body>
-                                    </>
+                                    <Card.Body className="p-2"></Card.Body>
                                 </Accordion.Collapse>
                             </Card>
                         </Accordion>
 
                         <Accordion defaultActiveKey="0" ref={(cell) => { this.accordion3 = cell; }}>
                             <Card>
-                                <Accordion.Toggle onClick={() => { this.handleCalc('cClose', cClose); }} className="py-0" as={Card.Header} eventKey="0">
+                                <Accordion.Toggle onClick={() => { this.handleCalc('cClose'); }} className="py-0" as={Card.Header} eventKey="0">
                                     Click C!
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="0">
-                                    <Card.Body>Hello! I'm the C body</Card.Body>
+                                    <Card.Body className="p-2"></Card.Body>
                                 </Accordion.Collapse>
                             </Card>
                         </Accordion>
@@ -204,15 +212,17 @@ export class TabsPanels extends Component {
 }
 
 TabsPanels.propTypes = {
-    // getAnnotations: PropTypes.func.isRequired,
     annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
     selectObject: PropTypes.func.isRequired,
-    // getBatchs: PropTypes.func.isRequired,
-    // deleteBatch: PropTypes.func.isRequired,
+    deleteObject: PropTypes.func.isRequired,
+    accordion1BodyH: PropTypes.any,
+    labels: PropTypes.object,
 };
 
 const mapStateToProps = (state) => ({
     annotations: state.annotations.annotations,
+    labels: state.annotations.labels,
+    accordion1BodyH: state.annotations.accordion1BodyH,
 });
 
-export default connect(mapStateToProps, { selectObject })(TabsPanels);
+export default connect(mapStateToProps, { selectObject, deleteObject })(TabsPanels);

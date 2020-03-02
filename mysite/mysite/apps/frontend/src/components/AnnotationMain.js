@@ -1,15 +1,9 @@
 import React, { Component } from 'react';
 import ReactDom from 'react-dom';
-import PropTypes from 'prop-types';
 import { connect, Provider } from 'react-redux';
 import axios from 'axios';
 
-
 import store from '../store';
-import { Players } from './players/Players';
-import { TabsPanels } from './tabspanels/TabsPanels';
-
-
 import Annotation from './annotataions/Annotation';
 
 
@@ -24,9 +18,7 @@ export class AnnotationMain extends Component {
     render() {
         return (
             <Provider store={store}>
-
                 <Annotation />
-
             </Provider>
         );
     }

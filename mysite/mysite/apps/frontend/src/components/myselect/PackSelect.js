@@ -37,8 +37,7 @@ export class PackSelect extends Component {
                 id: +e.target.value,
                 name: e.target.selectedOptions[0].text,
             },
-        },
-        () => { this.sendData(); });
+        }, () => { this.sendData(); });
     }
 
     render() {
@@ -50,7 +49,7 @@ export class PackSelect extends Component {
             <div className="input-group">
                 <div className="input-group-prepend">
                     <span className="input-group-text">
-                            Pack:
+                        Pack:
                     </span>
                 </div>
                 <select className="form-control" id="packSelect" name="pack" onChange={this.onChange} value={currentPID}>
@@ -66,10 +65,7 @@ export class PackSelect extends Component {
 
 PackSelect.propTypes = {
     projectPacks: PropTypes.arrayOf(PropTypes.object).isRequired,
-    // projectID: PropTypes.number.isRequired,
     onPackChange: PropTypes.func.isRequired,
-    // parentCallback: PropTypes.func.isRequired,
 };
 
 export default connect(null, {})(PackSelect);
-// export default connect(mapStateToProps, { getProjects })(PackSelect);

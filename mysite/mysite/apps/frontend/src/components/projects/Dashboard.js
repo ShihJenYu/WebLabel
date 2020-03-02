@@ -3,9 +3,6 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 
-// import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-// import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-// import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import { withStyles } from '@material-ui/core/styles';
@@ -15,9 +12,6 @@ import MuiExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
 import { Modal } from 'react-bootstrap';
 import Editor from './Editor';
-// import Form from './Form';
-// import Projects from './Projects';
-
 
 import {
     getProjects, addProject, deleteProject, renameProject,
@@ -350,14 +344,14 @@ export class Dashboard extends Component {
 
 
     onDragEndLabel = (result) => {
-        const { source, destination, draggableId } = result;
+        const { source, destination } = result;
         if (!destination) {
             return;
         }
         const { orderLabels, label } = this.state;
         const [remove] = orderLabels.splice(source.index, 1);
         orderLabels.splice(destination.index, 0, remove);
-        orderLabels.forEach((item, index, array) => {
+        orderLabels.forEach((item, index) => {
             item.order = index + 1;
             if (item.id === label.id) {
                 label.order = item.order;
@@ -373,14 +367,14 @@ export class Dashboard extends Component {
     }
 
     onDragEndAttributespec = (result) => {
-        const { source, destination, draggableId } = result;
+        const { source, destination } = result;
         if (!destination) {
             return;
         }
         const { orderAttributespecs, attributespec } = this.state;
         const [remove] = orderAttributespecs.splice(source.index, 1);
         orderAttributespecs.splice(destination.index, 0, remove);
-        orderAttributespecs.forEach((item, index, array) => {
+        orderAttributespecs.forEach((item, index) => {
             item.order = index + 1;
             if (item.id === attributespec.id) {
                 attributespec.order = item.order;

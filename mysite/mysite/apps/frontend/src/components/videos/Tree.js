@@ -49,13 +49,11 @@ export class MyTree extends Component {
         this.setState({ treeData });
     }
 
-
     sendData = () => {
         const { parentCallback } = this.props;
         const { checkedKeys } = this.state;
         parentCallback(checkedKeys);
     }
-
 
     onSelect = (info) => {
         console.log('selected', info);
@@ -128,8 +126,6 @@ export class MyTree extends Component {
 
 MyTree.propTypes = {
     parentCallback: PropTypes.func.isRequired,
-    // getProjects: PropTypes.func.isRequired,
 };
-
 
 export default connect(null, {})(MyTree);

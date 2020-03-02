@@ -15,7 +15,6 @@ export class Form extends Component {
     }
 
     componentDidUpdate() {
-        console.log('componentDidUpdate in video form');
         console.log(this.state);
     }
 
@@ -26,7 +25,6 @@ export class Form extends Component {
 
     onSubmit = (e) => {
         e.preventDefault();
-        console.log('submit add project');
         console.log(this.state);
         const { name } = this.state;
         const { addProject } = this.props;

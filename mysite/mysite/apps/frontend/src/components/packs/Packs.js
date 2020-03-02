@@ -78,7 +78,7 @@ export class Packs extends Component {
     onSave = async () => {
         const { d_selected, pack } = this.state;
         const res = await axios.post(`/api/v1/packs/${pack.id}/users/`, { selected: d_selected });
-        console.log('onSave');
+        console.log('onSave', res);
     };
 
 
@@ -89,8 +89,6 @@ export class Packs extends Component {
     };
 
     onClose = () => {
-        // const { project_users } = this.state;
-        // this.setState({ selected: project_users.in });
         console.log('onClose');
 
         this.setState({
@@ -122,15 +120,12 @@ export class Packs extends Component {
 
     async delete_pack(id) {
         const { onDeletePack } = this.props;
-        // await deletePack(id);
-
         const res = await axios.delete(`/api/v1/packs/${id}/`);
         console.log('res.data', res.data);
         onDeletePack(id);
     }
 
     async edit_pack(id, pack) {
-        // await deletePack(id);
         const { onRenamePack } = this.props;
         const res = await axios.patch(`/api/v1/packs/${id}/`, pack);
         console.log('res.data', res.data);
@@ -159,7 +154,6 @@ export class Packs extends Component {
         };
         const { projectPacks } = this.props;
 
-        // const d_options = [{ value: 'AAA', label: 'AAA' }, { value: 'BBB', label: 'BBB' }];
         const {
             users_show,
             d_selected,
@@ -211,7 +205,6 @@ export class Packs extends Component {
                                 </button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             );
@@ -264,10 +257,4 @@ Packs.propTypes = {
     onDeletePack: PropTypes.func.isRequired,
 };
 
-// const mapStateToProps = (state) => ({
-//     // packs: state.packs.packs,
-//     project_packs: state.projects.project_packs,
-// });
-
 export default connect(null, {})(Packs);
-// export default connect(mapStateToProps, { renamePack, deletePack })(Packs);

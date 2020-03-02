@@ -1,13 +1,9 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
-import axios from 'axios';
-
 
 import {
     Tab, Col, Row, Nav,
 } from 'react-bootstrap';
-
 
 import ObjectsPanels from './ObjectsPanels';
 
@@ -68,9 +64,6 @@ export class TabsPanels extends Component {
 }
 
 TabsPanels.propTypes = {
-
-    // getBatchs: PropTypes.func.isRequired,
-    // deleteBatch: PropTypes.func.isRequired,
 };
 
 export default connect(null, {})(TabsPanels);

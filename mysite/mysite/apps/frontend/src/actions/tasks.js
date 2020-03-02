@@ -2,43 +2,43 @@ import axios from 'axios';
 
 import { GET_TASKS, DELETE_TASK, ADD_TASK } from './types';
 
-//GET TASKS
-export const getTasks = () => dispatch => {
+// GET TASKS
+export const getTasks = () => (dispatch) => {
     axios
         .get('/api/v1/tasks/')
-        .then(res => {
+        .then((res) => {
             dispatch({
                 type: GET_TASKS,
-                payload: res.data
+                payload: res.data,
             });
         })
-        .catch(err => console.log(err));
-}
+        .catch((err) => console.log(err));
+};
 
 
-//DELETE TASK
-export const deleteTask = (id) => dispatch => {
+// DELETE TASK
+export const deleteTask = (id) => (dispatch) => {
     axios
         .delete(`/api/v1/tasks/${id}/`)
-        .then(res => {
+        .then(() => {
             dispatch({
                 type: DELETE_TASK,
-                payload: id
+                payload: id,
             });
         })
-        .catch(err => console.log(err));
-}
+        .catch((err) => console.log(err));
+};
 
 
-//ADD TASK
-export const addTask = (task) => dispatch => {
+// ADD TASK
+export const addTask = (task) => (dispatch) => {
     axios
         .post('/api/v1/tasks/', task)
-        .then(res => {
+        .then((res) => {
             dispatch({
                 type: ADD_TASK,
-                payload: res.data
+                payload: res.data,
             });
         })
-        .catch(err => console.log(err));
-}
+        .catch((err) => console.log(err));
+};

@@ -4,20 +4,9 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import { withStyles } from '@material-ui/core/styles';
-// import {
-//     fade,
-//     ThemeProvider,
-//     withStyles,
-//     makeStyles,
-//     createMuiTheme,
-// } from '@material-ui/core/styles';
 
 import Tooltip from '@material-ui/core/Tooltip';
 import InputBase from '@material-ui/core/InputBase';
-
-
-import compose from 'recompose/compose';
-import store from '../../store';
 
 
 const BootstrapInput = withStyles((theme) => ({
@@ -59,7 +48,7 @@ const BootstrapInput = withStyles((theme) => ({
 export class AttributeInput extends Component {
     constructor(props) {
         super(props);
-        this.state = { data: '', tipOpen: false };
+        this.state = { tipOpen: false };
     }
 
     componentDidMount() {
@@ -86,19 +75,15 @@ export class AttributeInput extends Component {
 
     handleChange = (e) => {
         const { onChange } = this.props;
-        // this.setState({ [e.target.name]: e.target.value });
         onChange(e);
     }
 
-
     render() {
-        // const { data, tipOpen } = this.state;
         const { tipOpen } = this.state;
         const { params, value } = this.props;
 
         return (
             <div style={{ height: '24px' }}>
-                {/* <Tooltip title={data} arrow open={tipOpen}> */}
                 <Tooltip title={value} arrow open={tipOpen}>
                     <BootstrapInput
                         inputProps={params}
@@ -110,7 +95,6 @@ export class AttributeInput extends Component {
                     />
                 </Tooltip>
             </div>
-
         );
     }
 }

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import {
     GET_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
+    CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH,
 } from './types';
 
 // GET PROJECTS
@@ -49,9 +50,43 @@ export const changeAttr = (objID, attrID, attrValue) => (dispatch) => {
     });
 };
 
+// CHANGE DEFAULT LABEL
+export const changeDefaultLabel = (labelID) => (dispatch) => {
+    dispatch({
+        type: CHANGE_DEFAULTLABEL,
+        payload: { labelID },
+    });
+};
+
+// SELECT OBJECT
 export const selectObject = (id) => (dispatch) => {
     dispatch({
         type: SELECT_OBJECT,
         payload: { id },
+    });
+};
+
+// CREATE OBJECT
+export const createObject = (obj) => (dispatch) => {
+    dispatch({
+        type: CREATE_OBJECT,
+        payload: { obj },
+    });
+};
+
+// DELETE OBJECT
+export const deleteObject = (id) => (dispatch) => {
+    dispatch({
+        type: DELETE_OBJECT,
+        payload: id,
+    });
+};
+
+
+// SET accordion1BodyH
+export const setAccordion1BodyH = (h) => (dispatch) => {
+    dispatch({
+        type: SET_ACCORDION1BODYH,
+        payload: h,
     });
 };

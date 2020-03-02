@@ -22,7 +22,7 @@ export const getProjects = () => (dispatch) => {
 export const deleteProject = (id) => (dispatch) => {
     axios
         .delete(`/api/v1/projects/${id}/`)
-        .then((res) => {
+        .then(() => {
             dispatch({
                 type: DELETE_PROJECT,
                 payload: id,

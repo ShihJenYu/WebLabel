@@ -40,8 +40,7 @@ export class Dashboard extends Component {
             currentProject: project,
             projectPacks: packs,
             currentPack: { id: null, name: null },
-        },
-        () => {
+        }, () => {
             console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
         });
     }
@@ -91,7 +90,7 @@ export class Dashboard extends Component {
             <div className="container">
                 <div className="row p-3">
                     <Button variant="primary" onClick={this.handleShow}>
-                    Open Create Videos Modal
+                        Open Create Videos Modal
                     </Button>
                     <Form
                         show={show}
@@ -138,9 +137,5 @@ export class Dashboard extends Component {
     }
 }
 
-// Dashboard.propTypes = {
-//     getProjectVideos: PropTypes.func.isRequired,
-//     getPackVideos: PropTypes.func.isRequired,
-// };
 
-export default connect(null, { })(Dashboard);
+export default connect(null, {})(Dashboard);

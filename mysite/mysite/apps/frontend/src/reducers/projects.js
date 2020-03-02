@@ -1,6 +1,7 @@
 import {
-    GET_PROJECTS, DELETE_PROJECT, ADD_PROJECT, RENAME_PROJECT, GET_PROJECT_PACKS, RENAME_PACK, ADD_PACK, DELETE_PACK
-} from '../actions/types.js';
+    GET_PROJECTS, DELETE_PROJECT, ADD_PROJECT, RENAME_PROJECT,
+    GET_PROJECT_PACKS, RENAME_PACK, ADD_PACK, DELETE_PACK,
+} from '../actions/types';
 
 const initialStata = {
     projects: [],
@@ -18,7 +19,7 @@ export default function (state = initialStata, action) {
         case DELETE_PROJECT:
             return {
                 ...state,
-                projects: state.projects.filter((project) => project.id != action.payload),
+                projects: state.projects.filter((project) => project.id !== action.payload),
             };
         case ADD_PROJECT:
             return {
@@ -28,7 +29,12 @@ export default function (state = initialStata, action) {
         case RENAME_PROJECT:
             return {
                 ...state,
-                projects: state.projects.map((project) => { if (project.id == action.payload.id) { return action.payload; } return project; }),
+                projects: state.projects.map((project) => {
+                    if (project.id === action.payload.id) {
+                        return action.payload;
+                    }
+                    return project;
+                }),
             };
         case GET_PROJECT_PACKS:
             return {
@@ -39,7 +45,11 @@ export default function (state = initialStata, action) {
         case RENAME_PACK:
             return {
                 ...state,
-                project_packs: state.project_packs.map((pack) => { if (pack.id == action.payload.id) { return action.payload; } return pack; }),
+                project_packs: state.project_packs.map((pack) => {
+                    if (pack.id === action.payload.id) {
+                        return action.payload;
+                    } return pack;
+                }),
             };
         case ADD_PACK:
             return {
@@ -49,7 +59,7 @@ export default function (state = initialStata, action) {
         case DELETE_PACK:
             return {
                 ...state,
-                project_packs: state.project_packs.filter((pack) => pack.id != action.payload),
+                project_packs: state.project_packs.filter((pack) => pack.id !== action.payload),
             };
         default:
             return state;

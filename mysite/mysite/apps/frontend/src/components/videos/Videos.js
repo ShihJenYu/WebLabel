@@ -42,21 +42,16 @@ const tableIcons = {
 
 export class Videos extends Component {
     componentDidMount() {
-        console.log('componentDidMount in video videos');
-        // const { getVideos } = this.props;
-        // getVideos();
     }
 
     async delete_video(id) {
         const { onDeleteVideo } = this.props;
-        // await deleteVideo(id);
         const res = await axios.delete(`/api/v1/videos/${id}/`);
         console.log('res.data', res.data);
         onDeleteVideo(id);
     }
 
     render() {
-        console.log('render in video videos');
         const { videos } = this.props;
 
         const m_columns = [
@@ -97,9 +92,4 @@ Videos.propTypes = {
     onDeleteVideo: PropTypes.func.isRequired,
 };
 
-// const mapStateToProps = (state) => ({
-//     videos: state.videos.videos,
-
-// });
-
-export default connect(null, { })(Videos);
+export default connect(null, {})(Videos);

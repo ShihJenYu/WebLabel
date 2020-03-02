@@ -31,13 +31,14 @@ SHARE_ROOT = '/home/jeff/Work/ShareRoot'
 
 
 def convertAttribute(attribute):
-    return {'name':attribute['name'],
-            'mutable':attribute['mutable'],
-            'attrtype':attribute['attrtype'],
-            'default_value':attribute['default_value'],
+    return {'name': attribute['name'],
+            'mutable': attribute['mutable'],
+            'attrtype': attribute['attrtype'],
+            'default_value': attribute['default_value'],
             'values': [attribute['values'][0].lower() != 'false'] if (attribute['attrtype'] == 'checkbox') else attribute['values'],
-            'order':attribute['order'],
+            'order': attribute['order'],
             }
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
@@ -143,7 +144,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             "label_set__attributespec_set",
         ).filter(id=pk).first()
 
-        labels = LabelSerializer(queryset.label_set.all(),many=True)
+        labels = LabelSerializer(queryset.label_set.all(), many=True)
 
         # print('queryset', labels.data)
 
@@ -157,10 +158,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             for attribute in label['attributes']:
                 tmp = convertAttribute(attribute)
                 labelsData[label['id']]['attributes'][attribute['id']] = tmp
-        
-        print('labelsData',labelsData)
 
-        return Response({'labelsData':labelsData})
+        print('labelsData', labelsData)
+
+        return Response({'labelsData': labelsData})
 
 
 class PackViewSet(viewsets.ModelViewSet):
@@ -317,12 +318,16 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'])
     def annotations(self, request):
         print('sssss')
+        max_id = 3
 
-        data = [{'id': 0, 'frame':0, 'shapetype':'rectangle', 'point':'10,10,50,50', 'label':1,'attrs':{'1':'false','2':'1'}},
-        {'id': 1, 'frame':0, 'shapetype':'rectangle', 'point':'100,100,150,150', 'label':1,'attrs':{'1':'true','2':'2'}},
-        {'id': 2, 'frame':0, 'shapetype':'rectangle', 'point':'210,210,250,250', 'label':1,'attrs':{'1':'false','2':'3'}},]
-        headers = self.get_success_headers(data)
-        return Response(data, status=status.HTTP_201_CREATED,
+        data = [{'id': 0, 'frame': 0, 'shapetype': 'rectangle', 'point': '10,10,50,50', 'label': 1, 'attrs': {'1': 'false', '2': '1'}},
+                {'id': 1, 'frame': 0, 'shapetype': 'rectangle', 'point': '100,100,150,150',
+                    'label': 1, 'attrs': {'1': 'true', '2': '2'}},
+                {'id': 2, 'frame': 0, 'shapetype': 'rectangle', 'point': '210,210,250,250', 'label': 1, 'attrs': {'1': 'false', '2': '3'}}, ]
+
+        output = {'data': data, 'maxID': max_id}
+        headers = self.get_success_headers(output)
+        return Response(output, status=status.HTTP_201_CREATED,
                         headers=headers)
 
 
@@ -420,11 +425,11 @@ class LabelViewSet(viewsets.ModelViewSet):
         print('serializer1')
         serializer1 = LabelSerializer(
             labels, many=True, context={"request": request})
-        a=serializer1.data
+        a = serializer1.data
         print('serializer2')
         serializer2 = AttributeSpecSerializer(
             attributespecs, many=True, context={"request": request})
-        a=serializer2.data
+        a = serializer2.data
 
         return Response({'labels': serializer1.data, 'attributespecs': serializer2.data})
 

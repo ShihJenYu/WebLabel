@@ -45,20 +45,6 @@ export class Editor extends Component {
         };
     }
 
-    // static getDerivedStateFromProps(nextProps, prevState) {
-    //     console.log('getDerivedStateFromProps', nextProps, prevState);
-    //     if (nextProps.project_id !== prevState.project_id) {
-    //         return {
-    //             show: nextProps.show,
-    //             project_id: nextProps.project_id,
-    //             project_name: nextProps.project_name,
-    //             selected: nextProps.project_users.in.sort(),
-    //             project_users: nextProps.project_users,
-    //         };
-    //     }
-    //     return null;
-    // }
-
     componentDidMount() {
 
     }
@@ -269,8 +255,6 @@ Editor.propTypes = {
     onOpenSpecEditor: PropTypes.func.isRequired,
     onCloseSpecEditor: PropTypes.func.isRequired,
 
-    // editingLabelID: PropTypes.number.isRequired,
-    // labelName: PropTypes.string.isRequired,
     label: PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
         name: PropTypes.string.isRequired,
@@ -284,8 +268,6 @@ Editor.propTypes = {
     orderAttributespecs: PropTypes.arrayOf(PropTypes.any).isRequired,
     onDragEndAttributespec: PropTypes.func.isRequired,
 
-    // editingSpecID: PropTypes.number.isRequired,
-    // attributespecName: PropTypes.string.isRequired,
     attributespec: PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
         name: PropTypes.string.isRequired,

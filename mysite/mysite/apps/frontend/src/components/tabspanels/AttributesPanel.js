@@ -1,37 +1,36 @@
-import React, { Component, forwardRef } from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import axios from 'axios';
 
 
-import {
-    Accordion, Card,
-} from 'react-bootstrap';
-import { IconButton } from '@material-ui/core';
+import { Card } from 'react-bootstrap';
 
-import CloseIcon from '@material-ui/icons/Close';
 import Checkbox from '@material-ui/core/Checkbox';
 
 import MultipleSelect from '../myselect/MultipleSelect';
 import AttributeInput from '../myselect/AttributeInput';
 
-import { changeLabel, changeAttr } from '../../actions/annotations';
+import { changeLabel, changeAttr, setAccordion1BodyH } from '../../actions/annotations';
 
-export class AttributesPanel extends Component {
+export class AttributesPanel extends PureComponent {
     constructor(props) {
         super(props);
-        this.state = { testCheck: false };
+        this.state = {};
+    }
+
+    componentDidUpdate() {
+        const { accordion1BodyH, setAccordion1BodyH } = this.props;
+        console.log('didupdate,', this);
+        this.divElement.parentElement.style.display = 'block';
+        if (this.divElement.clientHeight !== accordion1BodyH) {
+            setAccordion1BodyH(this.divElement.clientHeight);
+        }
+        this.divElement.parentElement.style.display = '';
     }
 
     // 34px is right tab height, 25px is Accordion.Toggle height
     // 'calc(100vh - 34px)'
     // 'calc(100vh - 301px)'  301 is tmp sample 267(include 3*(25+64))+34
-
-    handleChange = (event) => {
-        this.setState({
-            testCheck: event.target.checked,
-        });
-    };
 
     onChangeLabel = (e) => {
         const { changeLabel, labels, selectedObject } = this.props;
@@ -47,6 +46,7 @@ export class AttributesPanel extends Component {
         // objID, labelID, attrs
         changeLabel(selectedObject.id, labelID, attrs);
     }
+
     onChangeAttr = (e, type, attrID) => {
         const { selectedObject, changeAttr } = this.props;
         let attrValue = null;
@@ -79,11 +79,8 @@ export class AttributesPanel extends Component {
         }
     }
 
-    render() {
-        const {
-            testCheck,
-        } = this.state;
 
+    render() {
         const { labels, selectedObject } = this.props;
         console.log('labels, selectedObject', labels, selectedObject);
         // TODO selectedObject will change by object panel
@@ -91,18 +88,14 @@ export class AttributesPanel extends Component {
         // selectedObject decied content attribute
 
         let panelContent = null;
-        const attrsContent = null;
 
         const labelItems = Object.values(labels).map((item) => item.name);
         let tmp = [];
-        if (selectedObject.id > -1 && selectedObject.label > -1) {
-
-
+        const selectedObjectID = (selectedObject.id) ? +(selectedObject.id.toString().replace('new_', '')) : -1;
+        if (selectedObjectID > -1 && selectedObject.label > -1) {
             const attrs = labels[selectedObject.label].attributes;
 
-
             // TODO content need pass value to child
-
 
             Object.keys(attrs).forEach((attrID) => {
                 let content = null;
@@ -112,6 +105,7 @@ export class AttributesPanel extends Component {
                             const flag = selectedObject.attrs[attrID].toLowerCase() !== 'false';
                             content = (
                                 <Checkbox
+                                    key={attrID}
                                     className="p-0"
                                     checked={flag}
                                     onChange={(e) => { this.onChangeAttr(e, 'checkbox', attrID); }}
@@ -132,6 +126,7 @@ export class AttributesPanel extends Component {
 
                             content = (
                                 <MultipleSelect
+                                    key={attrID}
                                     value={val}
                                     onChange={(e) => { this.onChangeAttr(e, 'select', attrID); }}
                                     items={attrs[attrID].values.split(';').map((item) => item.trim()).filter((item) => item !== '')}
@@ -151,6 +146,7 @@ export class AttributesPanel extends Component {
 
                             content = (
                                 <MultipleSelect
+                                    key={attrID}
                                     multiple
                                     value={val}
                                     onChange={(e) => { this.onChangeAttr(e, 'multiselect', attrID); }}
@@ -162,6 +158,7 @@ export class AttributesPanel extends Component {
                     case 'text':
                         content = (
                             <AttributeInput
+                                key={attrID}
                                 value={selectedObject.attrs[attrID].toString()}
                                 onChange={(e) => { this.onChangeAttr(e, 'text', attrID); }}
                             />
@@ -173,6 +170,7 @@ export class AttributesPanel extends Component {
                             const numberSpec = attrs[attrID].values.split(';');
                             content = (
                                 <AttributeInput
+                                    key={attrID}
                                     value={selectedObject.attrs[attrID]}
                                     onChange={(e) => { this.onChangeAttr(e, 'number', attrID); }}
                                     params={{
@@ -188,7 +186,7 @@ export class AttributesPanel extends Component {
 
                 if (content) {
                     const tmpContent = (
-                        <tr>
+                        <tr key={attrID}>
                             <td style={{ width: '90px' }}>
                                 <div
                                     title={attrs[attrID].name}
@@ -209,7 +207,7 @@ export class AttributesPanel extends Component {
             });
         }
 
-        if (selectedObject.id > -1) {
+        if (selectedObjectID > -1) {
             panelContent = (
                 <div className="container p-0">
                     {/* style={{ overflowX: 'scroll' }} */}
@@ -228,132 +226,8 @@ export class AttributesPanel extends Component {
                     <hr className="m-1" style={{ marginTop: '1rem', marginBottom: '0px' }} />
 
                     <table className="table table-sm table-borderless m-0">
-                        <thead>
-                            {/* <tr>
-                                <th scope="col" style={{ width: '90px' }}>
-                                    <div style={{
-                                        width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                    }}
-                                    >
-                                        name
-                                    </div>
-                                </th>
-                                <th scope="col">value</th>
-                            </tr> */}
-                        </thead>
                         <tbody>
                             {tmp}
-                            {/* <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        roatationSom sacle
-                                    </div>
-                                </td>
-                                <td>
-                                    <MultipleSelect multiple />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        roatationSom sacle
-                                    </div>
-                                </td>
-                                <td>
-                                    <MultipleSelect />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        dispake any
-                                    </div>
-                                </td>
-                                <td><AttributeInput /></td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        number
-                                    </div>
-                                </td>
-                                <td><AttributeInput params={{ type: 'number' }} /></td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        A
-                                    </div>
-                                </td>
-                                <td>
-                                    <AttributeInput params={{ type: 'number', min: '-5' }} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        B
-                                    </div>
-                                </td>
-                                <td>
-                                    <AttributeInput params={{
-                                        type: 'number', min: '-5', max: '10', step: '0.1',
-                                    }}
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: '90px' }}>
-                                    <div
-                                        title="roatationSom sacle"
-                                        style={{
-                                            width: '90px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                                        }}
-                                    >
-                                        C
-                                    </div>
-                                </td>
-                                <td>
-                                    <Checkbox
-                                        className="p-0"
-                                        checked={testCheck}
-                                        onChange={this.handleChange}
-                                        size="small"
-                                        value="small"
-                                    />
-                                </td>
-                            </tr> */}
-                            {/* start att panel content */}
                         </tbody>
                     </table>
                 </div>
@@ -361,7 +235,7 @@ export class AttributesPanel extends Component {
         }
 
         return (
-            <Card.Body className="p-2">
+            <Card.Body className="p-2" ref={(divElement) => { this.divElement = divElement; }}>
                 {panelContent}
             </Card.Body>
         );
@@ -373,7 +247,8 @@ AttributesPanel.propTypes = {
     labels: PropTypes.object,
     changeLabel: PropTypes.func,
     changeAttr: PropTypes.func,
-    // getBatchs: PropTypes.func.isRequired,
+    accordion1BodyH: PropTypes.any,
+    setAccordion1BodyH: PropTypes.func.isRequired,
     // deleteBatch: PropTypes.func.isRequired,
 };
 
@@ -381,6 +256,12 @@ AttributesPanel.propTypes = {
 const mapStateToProps = (state) => ({
     selectedObject: state.annotations.selectedObject,
     labels: state.annotations.labels,
+    accordion1BodyH: state.annotations.accordion1BodyH,
 });
 
-export default connect(mapStateToProps, { changeLabel, changeAttr })(AttributesPanel);
+export default connect(
+    mapStateToProps,
+    {
+        changeLabel, changeAttr, setAccordion1BodyH,
+    },
+)(AttributesPanel);

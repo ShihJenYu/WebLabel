@@ -1,7 +1,5 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
-import axios from 'axios';
 
 
 import { IconButton } from '@material-ui/core';
@@ -23,7 +21,6 @@ export class Players extends Component {
 
         };
     }
-
 
     render() {
         return (
@@ -61,9 +58,6 @@ export class Players extends Component {
 }
 
 Players.propTypes = {
-
-    // getBatchs: PropTypes.func.isRequired,
-    // deleteBatch: PropTypes.func.isRequired,
 };
 
 export default connect(null, {})(Players);

@@ -2,45 +2,43 @@ import axios from 'axios';
 
 import { GET_BATCHS, DELETE_BATCH, ADD_BATCH } from './types';
 
-//GET BATCHS
-export const getBatchs = () => dispatch => {
+// GET BATCHS
+export const getBatchs = () => (dispatch) => {
     axios
         .get('/api/v1/batchs/')
-        .then(res => {
+        .then((res) => {
             dispatch({
                 type: GET_BATCHS,
-                payload: res.data
+                payload: res.data,
             });
         })
-        .catch(err => console.log(err));
-}
+        .catch((err) => console.log(err));
+};
 
 
-//DELETE BATCH
-export const deleteBatch = (id) => dispatch => {
+// DELETE BATCH
+export const deleteBatch = (id) => (dispatch) => {
     axios
         .delete(`/api/v1/batchs/${id}/`)
-        .then(res => {
+        .then(() => {
             dispatch({
                 type: DELETE_BATCH,
-                payload: id
+                payload: id,
             });
         })
-        .catch(err => console.log(err));
-}
+        .catch((err) => console.log(err));
+};
 
 
-//ADD BATCH
-export const addBatch = (batch) => dispatch => {
+// ADD BATCH
+export const addBatch = (batch) => (dispatch) => {
     axios
         .post('/api/v1/batchs/', batch)
-        .then(res => {
+        .then((res) => {
             dispatch({
                 type: ADD_BATCH,
-                payload: res.data
+                payload: res.data,
             });
-            console.log('res', res)
         })
-        .catch(err => console.log(err));
-    console.log('ssssssssssssss')
-}
+        .catch((err) => console.log(err));
+};

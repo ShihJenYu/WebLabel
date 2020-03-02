@@ -17,21 +17,17 @@ export class ProjectSelect extends Component {
     }
 
     componentDidUpdate() {
-        console.log('componentDidUpdate in ProjectSelect');
-        console.log(this.state);
     }
 
     async getPacks(project) {
         const { onProjectChange } = this.props;
         const res = await axios.get(`/api/v1/projects/${project.id}/packs`);
 
-        console.log('res.data', res.data);
         onProjectChange(project, res.data);
     }
 
     sendData = () => {
         const { currentProject } = this.state;
-        console.log('sendData', currentProject);
         this.getPacks(currentProject);
     }
 
@@ -41,8 +37,7 @@ export class ProjectSelect extends Component {
                 id: +e.target.value,
                 name: e.target.selectedOptions[0].text,
             },
-        },
-        () => { this.sendData(); });
+        }, () => { this.sendData(); });
     }
 
     render() {
@@ -54,7 +49,7 @@ export class ProjectSelect extends Component {
             <div className="input-group">
                 <div className="input-group-prepend">
                     <span className="input-group-text">
-                            Project:
+                        Project:
                     </span>
                 </div>
                 <select defaultValue="DEFAULT" className="form-control" id="projectSelect" name="project" onChange={this.onChange}>
@@ -75,7 +70,6 @@ ProjectSelect.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-    // state.reducer.initialState's content
     projects: state.projects.projects,
 });
 

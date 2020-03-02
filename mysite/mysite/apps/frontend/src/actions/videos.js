@@ -22,7 +22,7 @@ export const getVideos = () => (dispatch) => {
 export const deleteVideo = (id) => (dispatch) => {
     axios
         .delete(`/api/v1/videos/${id}/`)
-        .then((res) => {
+        .then(() => {
             dispatch({
                 type: DELETE_VIDEO,
                 payload: id,
@@ -35,7 +35,7 @@ export const deleteVideo = (id) => (dispatch) => {
 export const renam = (id) => (dispatch) => {
     axios
         .delete(`/api/v1/videos/${id}/`)
-        .then((res) => {
+        .then(() => {
             dispatch({
                 type: DELETE_VIDEO,
                 payload: id,

@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
-import ReactDom from 'react-dom';
 import PropTypes from 'prop-types';
-import { connect, Provider } from 'react-redux';
+import { connect } from 'react-redux';
 import axios from 'axios';
 
-
-import store from '../../store';
 import { Players } from '../players/Players';
 import { TabsPanels } from '../tabspanels/TabsPanels';
 
-import { getAnnotations, getLabels } from '../../actions/annotations';
+import {
+    getAnnotations, getLabels, changeDefaultLabel, createObject,
+} from '../../actions/annotations';
 
+import MultipleSelect from '../myselect/MultipleSelect';
 
 export class Annotation extends Component {
     constructor(props) {
@@ -24,16 +24,61 @@ export class Annotation extends Component {
         console.log('componentDidMount in Annotation');
         const { getAnnotations, getLabels } = this.props;
         getAnnotations();
+        // todo use project id to get labels
         getLabels(1);
     }
 
+    onChangeDefaultLabel = (e) => {
+        const { changeDefaultLabel, labels } = this.props;
+        console.log('test', e.target.value);
+        const labelID = +Object.keys(labels).find((key) => (labels[key].name === e.target.value));
+
+        changeDefaultLabel(labelID);
+    }
+
+    createNewTest = () => {
+        const {
+            createObject, defaultLabelID, labels, maxID,
+        } = this.props;
+
+        const selectedDefaultAttrs = labels[defaultLabelID].attributes;
+        const attrs = {};
+
+        Object.keys(selectedDefaultAttrs).forEach((attrID) => {
+            attrs[attrID] = selectedDefaultAttrs[attrID].default_value;
+        });
+
+        const newObj = {
+            id: `new_${maxID.toString()}`,
+            frame: 0,
+            shapetype: 'rectangle',
+            point: '100,100,150,150',
+            label: +defaultLabelID,
+            attrs,
+        };
+        createObject(newObj);
+    }
+
+    saveTest = () => {
+        console.log('saveTest');
+    }
+
     render() {
+        const { labels, defaultLabelID } = this.props;
+        const labelItems = Object.values(labels).map((item) => item.name);
+        const defaultLabel = (defaultLabelID != null) ? [labels[defaultLabelID].name] : [];
         return (
             <div className="container-fluid" style={{ height: '100%' }}>
                 <div className="row" style={{ height: '100%' }}>
                     <div className="col d-flex flex-column h-100">
                         <div className="row" style={{ height: '34px', background: 'darksalmon' }}>
-                            header
+                            <MultipleSelect
+                                items={labelItems}
+                                value={defaultLabel}
+                                onChange={this.onChangeDefaultLabel}
+                            />
+                            <input type="button" onClick={this.createNewTest} value="createNewTest" />
+                            <input type="button" onClick={this.saveTest} value="saveTest" />
                         </div>
                         <div className="row  flex-grow-1" style={{ background: 'slategray' }}>
                             middle
@@ -53,11 +98,24 @@ export class Annotation extends Component {
 Annotation.propTypes = {
     getAnnotations: PropTypes.func.isRequired,
     getLabels: PropTypes.func.isRequired,
+    changeDefaultLabel: PropTypes.func.isRequired,
+    labels: PropTypes.object,
+    defaultLabelID: PropTypes.any,
+    maxID: PropTypes.any,
+    createObject: PropTypes.func.isRequired,
+
 };
 
 const mapStateToProps = (state) => ({
     annotations: state.annotations.annotations,
     labels: state.annotations.labels,
+    defaultLabelID: state.annotations.defaultLabelID,
+    maxID: state.annotations.maxID,
 });
 
-export default connect(mapStateToProps, { getAnnotations, getLabels })(Annotation);
+export default connect(
+    mapStateToProps,
+    {
+        getAnnotations, getLabels, changeDefaultLabel, createObject,
+    },
+)(Annotation);

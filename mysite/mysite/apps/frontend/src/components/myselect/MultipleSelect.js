@@ -3,19 +3,15 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
-// import { makeStyles } from '@material-ui/core/styles';
 import { withStyles } from '@material-ui/core/styles';
 
 import Tooltip from '@material-ui/core/Tooltip';
-import Input from '@material-ui/core/Input';
-import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import ListItemText from '@material-ui/core/ListItemText';
 import Select from '@material-ui/core/Select';
 import Checkbox from '@material-ui/core/Checkbox';
 import compose from 'recompose/compose';
-import store from '../../store';
 
 const useStyles = (theme) => ({
     formControl: {
@@ -52,28 +48,10 @@ const MenuProps = {
     },
 };
 
-// TODO use prop passing
-// const items = [
-//     'Oliver Hansen',
-//     'Van HenryHenryHenry AAAA',
-//     'April Tucker',
-//     'Ralph Hubbard',
-//     'Omar Alexander',
-//     'Carlos Abbott',
-//     'Miriam Wagner',
-//     'Bradley Wilkerson',
-//     'Virginia Andrews',
-//     'somosmaodmoasmdoasdakdasdasdadada',
-//     'weewweweewewewewewewewe',
-//     'aa',
-// ];
-
-// const classes = useStyles();
-
 export class MultipleSelect extends Component {
     constructor(props) {
         super(props);
-        this.state = { selectedValue: [], tipOpen: false };
+        this.state = { tipOpen: false };
     }
 
     componentDidMount() {
@@ -86,26 +64,22 @@ export class MultipleSelect extends Component {
     handleChange = (e) => {
         const { onChange } = this.props;
         console.log('handleChange', e.target.value);
-        // this.setState({
-        //     selectedValue: e.target.value,
-        // });
         onChange(e);
     }
 
-    handleEnter = (e) => {
+    handleEnter = () => {
         this.setState({
             tipOpen: true,
         });
     }
 
-    handleLeave = (e) => {
+    handleLeave = () => {
         this.setState({
             tipOpen: false,
         });
     }
 
-    handleOpen = (e) => {
-        // console.log('handleOpen', e.target.value);
+    handleOpen = () => {
         this.setState({
             tipOpen: false,
         });
@@ -114,8 +88,9 @@ export class MultipleSelect extends Component {
     render() {
         // const { selectedValue, tipOpen } = this.state;
         const { tipOpen } = this.state;
-        const { classes, multiple, blank, items, value } = this.props;
-        // const titleStr = (typeof selectedValue === 'string') ? selectedValue : selectedValue.join(', ');
+        const {
+            classes, multiple, blank, items, value,
+        } = this.props;
         const titleStr = (typeof value === 'string') ? value : value.join(', ');
 
         let content = [];
@@ -123,7 +98,6 @@ export class MultipleSelect extends Component {
         if (multiple) {
             content = items.map((item) => (
                 <MenuItem style={{ padding: '0px 10px' }} key={item} value={item}>
-                    {/* <Checkbox size="small" style={{ padding: '0px 10px 0px 0px' }} checked={selectedValue.indexOf(item) > -1} /> */}
                     <Checkbox size="small" style={{ padding: '0px 10px 0px 0px' }} checked={value.indexOf(item) > -1} />
                     <ListItemText primary={item} />
                 </MenuItem>
@@ -154,7 +128,6 @@ export class MultipleSelect extends Component {
                             // labelId="demo-mutiple-checkbox-label"
                             // id="demo-mutiple-checkbox"
                             multiple={multiple}
-                            // value={selectedValue}
                             value={value}
                             onChange={this.handleChange}
                             onMouseEnter={this.handleEnter}
@@ -168,10 +141,8 @@ export class MultipleSelect extends Component {
                             {content}
                         </Select>
                     </FormControl>
-
                 </Tooltip>
             </div>
-
         );
     }
 }
@@ -192,17 +163,6 @@ MultipleSelect.propTypes = {
     value: PropTypes.arrayOf(PropTypes.any),
     onChange: PropTypes.func,
 };
-
-// const mapStateToProps = () => ({
-//     // classes: PropTypes.object.isRequired,
-//     // // state.reducer.initialState's content
-//     // projects: state.projects.projects,
-// });
-
-// MultipleSelect = withStyles(useStyles, { name: 'MultipleSelect' })(MultipleSelect);
-// export default connect(null, {})(MultipleSelect);
-
-// export default connect(null, {})(withStyles(useStyles)(MultipleSelect));
 
 export default compose(
     withStyles(useStyles, { name: 'MultipleSelect' }),

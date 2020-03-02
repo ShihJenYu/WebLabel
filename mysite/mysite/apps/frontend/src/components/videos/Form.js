@@ -4,8 +4,6 @@ import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 import { addVideo } from '../../actions/videos';
 import { MyTree } from './Tree';
-// import { getProjects, getProjectPacks } from '../../actions/projects';
-
 
 export class Form extends Component {
     constructor(props) {
@@ -18,13 +16,9 @@ export class Form extends Component {
     }
 
     componentDidMount() {
-        console.log('componentDidMount in video form');
-        // this.props.getProjects();
     }
 
     componentDidUpdate() {
-        console.log('componentDidUpdate in video form');
-        console.log(this.state);
     }
 
     callbackFunction = (childData) => {
@@ -88,9 +82,6 @@ export class Form extends Component {
 }
 
 Form.propTypes = {
-    // projects: PropTypes.array.isRequired,
-    // packs: PropTypes.array.isRequired,
-    // getProjects: PropTypes.func.isRequired,
     show: PropTypes.bool.isRequired,
     parentCallHide: PropTypes.func.isRequired,
     addVideo: PropTypes.func.isRequired,

@@ -1,4 +1,4 @@
-import { combineReducers } from "redux";
+import { combineReducers } from 'redux';
 import tasks from './tasks';
 import projects from './projects';
 import packs from './packs';
