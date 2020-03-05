@@ -25,6 +25,7 @@ export const ADD_TASK = 'ADD_TASK';
 
 
 export const GET_ANNOTATIONS = 'GET_ANNOTATIONS';
+export const PATCH_ANNOTATIONS = 'PATCH_ANNOTATIONS';
 export const GET_LABELS = 'GET_LABELS';
 
 

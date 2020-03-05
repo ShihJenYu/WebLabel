@@ -70,6 +70,7 @@ class Task(models.Model):
     isfolder = models.BooleanField(default=False)
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True)
+    maxshape_id = models.BigIntegerField(default=0)
 
     class Meta:
         unique_together = [['name', 'batch']]
@@ -172,7 +173,7 @@ class Shape(models.Model):
 
 
 class LabeledShape(Annotation, Shape):
-    pass
+    shape_id = models.BigIntegerField()
 
 
 # include all shape attr val

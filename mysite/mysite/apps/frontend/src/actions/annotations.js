@@ -1,24 +1,38 @@
 import axios from 'axios';
 
 import {
-    GET_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
+    GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH,
 } from './types';
 
-// GET PROJECTS
-export const getAnnotations = () => (dispatch) => {
+// GET ANNOTATIONS
+export const getAnnotations = (id) => (dispatch) => {
     console.log('in get annotations');
     axios
-        .get('/api/v1/tasks/annotations')
+        .get(`/api/v1/tasks/${id}/annotations/`)
         .then((res) => {
             dispatch({
                 type: GET_ANNOTATIONS,
                 payload: res.data,
             });
+            console.log('getAnnotations end');
         })
         .catch((err) => console.log(err));
 };
 
+// PATCH ANNOTATIONS
+export const patchAnnotations = (id, data) => (dispatch) => {
+    console.log('in patch annotations');
+    axios
+        .patch(`/api/v1/tasks/${id}/annotations/`, data)
+        .then((res) => {
+            dispatch({
+                type: PATCH_ANNOTATIONS,
+                payload: res.data,
+            });
+        })
+        .catch((err) => console.log(err));
+};
 
 // GET LABELS
 export const getLabels = (id) => (dispatch) => {
@@ -29,6 +43,7 @@ export const getLabels = (id) => (dispatch) => {
                 type: GET_LABELS,
                 payload: res.data,
             });
+            console.log('getLabels end');
         })
         .catch((err) => console.log(err));
 };

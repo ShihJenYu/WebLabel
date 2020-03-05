@@ -8,6 +8,8 @@ import {
 
 import { IconButton } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
+import KeyboardArrowRightIcon from '@material-ui/icons/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 
 import AttributesPanel from './AttributesPanel';
 
@@ -115,7 +117,7 @@ export class TabsPanels extends Component {
                             this.handleButtonClick2(e, annotatation.id);
                         }}
                     >
-                        {`${annotatation.id} ${annotatation.shapetype}`}
+                        {`${annotatation.shapeid} ${annotatation.shapetype}`}
                         <IconButton
                             className="float-right p-0"
                             aria-label="delete"
@@ -173,8 +175,9 @@ export class TabsPanels extends Component {
                         {/* start a tool panel component */}
                         <Accordion defaultActiveKey="0" ref={(cell) => { this.accordion1 = cell; }}>
                             <Card>
-                                <Accordion.Toggle onClick={() => { this.handleCalc('aClose'); }} className="py-0" as={Card.Header} eventKey="0">
-                                    Click A!
+                                <Accordion.Toggle onClick={() => { this.handleCalc('aClose'); }} className="p-0" as={Card.Header} eventKey="0">
+                                    {aClose ? <KeyboardArrowRightIcon /> : <KeyboardArrowDownIcon />}
+                                    AttributesPanel
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="0">
                                     <AttributesPanel />

@@ -129,6 +129,7 @@ export class LEditor extends Component {
                                     value={attributespec.attrtype}
                                     onChange={onChangeAttributeSpecValue}
                                 >
+                                    <option value="" disabled />
                                     <option value="checkbox">checkbox</option>
                                     <option value="radio">radio</option>
                                     <option value="text">text</option>
@@ -170,7 +171,7 @@ export class LEditor extends Component {
                                     variant="outlined"
                                     name="values"
                                     style={{ width: '100%', background: 'white' }}
-                                    value={attributespec.values}
+                                    value={attributespec.values.split(';').map((value) => value.trim()).join(';\n')}
                                     onChange={onChangeAttributeSpecValue}
                                 />
                             </div>

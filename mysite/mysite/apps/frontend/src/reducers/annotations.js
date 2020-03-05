@@ -1,5 +1,5 @@
 import {
-    GET_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
+    GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH,
 } from '../actions/types';
 
@@ -15,11 +15,15 @@ const initialStata = {
 export default function (state = initialStata, action) {
     switch (action.type) {
         case GET_ANNOTATIONS:
-            console.log('sss', action.payload);
             return {
                 ...state,
                 annotations: action.payload.data,
                 maxID: action.payload.maxID,
+            };
+        case PATCH_ANNOTATIONS:
+            console.log('PATCH_ANNOTATIONS', action.payload);
+            return {
+                ...state,
             };
         case GET_LABELS:
             console.log('haHA', action.payload);

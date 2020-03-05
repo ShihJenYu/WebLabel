@@ -26,6 +26,7 @@ import os
 import glob
 import time
 import json
+from . import annotation
 
 SHARE_ROOT = '/home/jeff/Work/ShareRoot'
 
@@ -315,20 +316,32 @@ class TaskViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.DjangoFilterBackend]
     filter_class = TaskFilter
 
-    @action(detail=False, methods=['GET'])
-    def annotations(self, request):
-        print('sssss')
-        max_id = 3
+    @action(detail=True, methods=['GET', 'PATCH'])
+    def annotations(self, request, pk):
+        if request.method == 'GET':
+            task = Task.objects.get(id=pk)
+            max_id = task.maxshape_id
 
-        data = [{'id': 0, 'frame': 0, 'shapetype': 'rectangle', 'point': '10,10,50,50', 'label': 1, 'attrs': {'1': 'false', '2': '1'}},
-                {'id': 1, 'frame': 0, 'shapetype': 'rectangle', 'point': '100,100,150,150',
-                    'label': 1, 'attrs': {'1': 'true', '2': '2'}},
-                {'id': 2, 'frame': 0, 'shapetype': 'rectangle', 'point': '210,210,250,250', 'label': 1, 'attrs': {'1': 'false', '2': '3'}}, ]
+            data = annotation.get_task_data(pk, request.user)
 
-        output = {'data': data, 'maxID': max_id}
-        headers = self.get_success_headers(output)
-        return Response(output, status=status.HTTP_201_CREATED,
-                        headers=headers)
+            # data = [{'id': 0, 'frame': 0, 'shapetype': 'rectangle', 'point': '10,10,50,50', 'label': 1, 'attrs': {'1': 'false', '2': '1'}},
+            #         {'id': 1, 'frame': 0, 'shapetype': 'rectangle', 'point': '100,100,150,150',
+            #             'label': 1, 'attrs': {'1': 'true', '2': '2'}},
+            #         {'id': 2, 'frame': 0, 'shapetype': 'rectangle', 'point': '210,210,250,250', 'label': 1, 'attrs': {'1': 'false', '2': '3'}}, ]
+
+            output = {'data': data, 'maxID': max_id}
+            headers = self.get_success_headers(output)
+            return Response(output, status=status.HTTP_201_CREATED,
+                            headers=headers)
+        elif request.method == 'PATCH':
+            try:
+                print('in patch')
+                data, max_id = annotation.patch_task_data(
+                    pk, request.user, request.data)
+
+            except Exception as e:
+                return Response({'data': data, 'maxID': max_id}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data)
 
 
 class LabelFilter(filters.FilterSet):
@@ -377,7 +390,8 @@ class LabelViewSet(viewsets.ModelViewSet):
                                                           mutable=srcAttributespec['mutable'],
                                                           attrtype=srcAttributespec['attrtype'],
                                                           default_value=srcAttributespec['default_value'],
-                                                          values=srcAttributespec['values'],
+                                                          values=srcAttributespec['values'].replace(
+                                                              '\n', ''),
                                                           # default 99
                                                           order=srcAttributespec['order'],
                                                           label=label))
@@ -389,7 +403,8 @@ class LabelViewSet(viewsets.ModelViewSet):
                                                               mutable=srcAttributespec['mutable'],
                                                               attrtype=srcAttributespec['attrtype'],
                                                               default_value=srcAttributespec['default_value'],
-                                                              values=srcAttributespec['values'],
+                                                              values=srcAttributespec['values'].replace(
+                                                                  '\n', ''),
                                                               # default 99
                                                               order=srcAttributespec['order'],
                                                               label=label))
@@ -406,7 +421,8 @@ class LabelViewSet(viewsets.ModelViewSet):
                         attribute.mutable = srcAttributespec['mutable']
                         attribute.attrtype = srcAttributespec['attrtype']
                         attribute.default_value = srcAttributespec['default_value']
-                        attribute.values = srcAttributespec['values']
+                        attribute.values = srcAttributespec['values'].replace(
+                            '\n', '')
                         attribute.order = srcAttributespec['order']
                         attribute.save()
 

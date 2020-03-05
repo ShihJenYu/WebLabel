@@ -7,7 +7,8 @@ import { Players } from '../players/Players';
 import { TabsPanels } from '../tabspanels/TabsPanels';
 
 import {
-    getAnnotations, getLabels, changeDefaultLabel, createObject,
+    getAnnotations, patchAnnotations,
+    getLabels, changeDefaultLabel, createObject,
 } from '../../actions/annotations';
 
 import MultipleSelect from '../myselect/MultipleSelect';
@@ -22,10 +23,17 @@ export class Annotation extends Component {
 
     componentDidMount() {
         console.log('componentDidMount in Annotation');
+        // TODO annotation need wait labels
+        this.getData(1, 4);
+    }
+
+    async getData(projectID, taskID) {
         const { getAnnotations, getLabels } = this.props;
-        getAnnotations();
-        // todo use project id to get labels
-        getLabels(1);
+        console.log('getLabels start');
+        await getLabels(projectID);
+        console.log('getAnnotations start');
+        await getAnnotations(taskID);
+        console.log('ToDo write api for get batchs use pack id');
     }
 
     onChangeDefaultLabel = (e) => {
@@ -49,10 +57,11 @@ export class Annotation extends Component {
         });
 
         const newObj = {
-            id: `new_${maxID.toString()}`,
+            id: `new_${(maxID + 1).toString()}`,
             frame: 0,
             shapetype: 'rectangle',
-            point: '100,100,150,150',
+            shapeid: `new_${(maxID + 1).toString()}`,
+            points: '100,100,150,150',
             label: +defaultLabelID,
             attrs,
         };
@@ -61,6 +70,8 @@ export class Annotation extends Component {
 
     saveTest = () => {
         console.log('saveTest');
+        const { annotations, patchAnnotations } = this.props;
+        patchAnnotations(4, annotations);
     }
 
     render() {
@@ -97,12 +108,14 @@ export class Annotation extends Component {
 
 Annotation.propTypes = {
     getAnnotations: PropTypes.func.isRequired,
+    patchAnnotations: PropTypes.func.isRequired,
     getLabels: PropTypes.func.isRequired,
     changeDefaultLabel: PropTypes.func.isRequired,
     labels: PropTypes.object,
     defaultLabelID: PropTypes.any,
     maxID: PropTypes.any,
     createObject: PropTypes.func.isRequired,
+    annotations: PropTypes.any,
 
 };
 
@@ -116,6 +129,6 @@ const mapStateToProps = (state) => ({
 export default connect(
     mapStateToProps,
     {
-        getAnnotations, getLabels, changeDefaultLabel, createObject,
+        getAnnotations, patchAnnotations, getLabels, changeDefaultLabel, createObject,
     },
 )(Annotation);
