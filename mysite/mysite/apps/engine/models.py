@@ -62,6 +62,7 @@ class Batch(models.Model):
 class Video(models.Model):
     folder = models.CharField(max_length=256)
     path = models.CharField(max_length=256)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
 
 class Task(models.Model):

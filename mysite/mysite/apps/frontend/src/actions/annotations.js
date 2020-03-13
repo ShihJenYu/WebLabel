@@ -36,6 +36,7 @@ export const patchAnnotations = (id, data) => (dispatch) => {
 
 // GET LABELS
 export const getLabels = (id) => (dispatch) => {
+    console.log('in get labels');
     axios
         .get(`/api/v1/projects/${id}/labels/`)
         .then((res) => {

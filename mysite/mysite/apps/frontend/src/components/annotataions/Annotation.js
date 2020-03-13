@@ -24,13 +24,17 @@ export class Annotation extends Component {
     componentDidMount() {
         console.log('componentDidMount in Annotation');
         // TODO annotation need wait labels
-        this.getData(1, 4);
+        this.tid = window.location.search.match('id=[0-9]+')[0].slice(3);
+        this.getData(this.tid);
     }
 
-    async getData(projectID, taskID) {
+    async getData(taskID) {
         const { getAnnotations, getLabels } = this.props;
+        const res = await axios.get(`/api/v1/tasks/${taskID}/project/`);
+        console.log('tasks_project', res.data);
+
         console.log('getLabels start');
-        await getLabels(projectID);
+        await getLabels(res.data.id);
         console.log('getAnnotations start');
         await getAnnotations(taskID);
         console.log('ToDo write api for get batchs use pack id');
@@ -71,7 +75,7 @@ export class Annotation extends Component {
     saveTest = () => {
         console.log('saveTest');
         const { annotations, patchAnnotations } = this.props;
-        patchAnnotations(4, annotations);
+        patchAnnotations(this.tid, annotations);
     }
 
     render() {

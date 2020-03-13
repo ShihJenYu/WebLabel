@@ -4,6 +4,7 @@ import {
 } from '../actions/types';
 
 const initialStata = {
+    projectID: -1,
     annotations: [],
     labels: {},
     maxID: -1,
@@ -17,6 +18,7 @@ export default function (state = initialStata, action) {
         case GET_ANNOTATIONS:
             return {
                 ...state,
+                projectID: action.payload.projectID,
                 annotations: action.payload.data,
                 maxID: action.payload.maxID,
             };

@@ -20,12 +20,18 @@ export class Dashboard extends Component {
             projectPacks: [],
             videos: [],
             show: false,
+            update_list: '',
         };
     }
 
     async getVideosByProject(id) {
-        const res = await axios.get(`/api/v1/videos/?project=${id}`);
-        this.setState({ videos: res.data });
+        if (id === null || id === '') {
+            console.log('project id is empty');
+        } else {
+            const res = await axios.get(`/api/v1/videos/?project=${id}`);
+            console.log('get videos', res);
+            this.setState({ videos: res.data });
+        }
     }
 
     async getVideosByPack(id) {
@@ -40,6 +46,7 @@ export class Dashboard extends Component {
             currentProject: project,
             projectPacks: packs,
             currentPack: { id: null, name: null },
+            videos: [],
         }, () => {
             console.log('handleProjectChange set', currentProject, projectPacks, currentPack);
         });
@@ -51,6 +58,18 @@ export class Dashboard extends Component {
     }
 
     handleDeleteVideo = (videoID) => {
+        const { videos } = this.state;
+        this.setState({ videos: videos.filter((item) => item.id !== videoID) },
+            () => {
+                console.log('videos', videos);
+            });
+    }
+
+    handleRefreshVideos = () => {
+
+
+        this.getVideosByProject(currentProject.id);
+
         const { videos } = this.state;
         this.setState({ videos: videos.filter((item) => item.id !== videoID) },
             () => {
@@ -77,9 +96,30 @@ export class Dashboard extends Component {
         }
     }
 
+    update_list_change = (e) => {
+        this.setState({ update_list: e.target.files[0] });
+    }
+
+    update_list_submit = (e) => {
+        const { update_list } = this.state;
+        console.log(update_list);
+        this.upload_listfile(update_list);
+
+        e.preventDefault();
+    }
+
+    upload_listfile = async (file) => {
+        const data = new FormData();
+        data.append('file', file);
+        data.append('action', 'videolist');
+        const res = await axios.post(`${window.location.origin}/api/v1/server/upload_listfile/`, data);
+        console.log(res);
+    }
+
+
     render() {
         const {
-            currentProject, projectPacks, videos, show,
+            currentProject, projectPacks, videos, show, update_list,
         } = this.state;
         let flag = true;
         if (typeof (currentProject.id) === 'number') {
@@ -87,8 +127,34 @@ export class Dashboard extends Component {
         }
 
         return (
-            <div className="container">
-                <div className="row p-3">
+            <div className="container-fluid">
+                <br />
+                <div className="row align-items-center">
+                    <div className="col-auto">
+                        <form onSubmit={this.update_list_submit}>
+                            <input type="file" name="file" onChange={this.update_list_change} accept=".txt" />
+                            <input type="submit" value="Submit" />
+                        </form>
+                    </div>
+                </div>
+                <br />
+                <div className="row">
+                    <div className="col-auto">
+                        <ProjectSelect onProjectChange={this.handleProjectChange} />
+                    </div>
+                </div>
+                <br />
+                <div className="row">
+                    <div className="col-7">
+                        <Videos
+                            videos={videos}
+                            onDeleteVideo={this.handleDeleteVideo}
+                            refreshVideos={() => this.getVideosByProject(currentProject.id)}
+                        />
+                    </div>
+
+                </div>
+                {/* <div className="row p-3">
                     <Button variant="primary" onClick={this.handleShow}>
                         Open Create Videos Modal
                     </Button>
@@ -113,7 +179,6 @@ export class Dashboard extends Component {
                     <div className="col p-0">
                         <Button variant="primary" onClick={this.handleSearch} disabled={flag}>
                             Search
-                            {/* #TODO: create api get project's pack's videos */}
                         </Button>
                     </div>
                 </div>
@@ -123,9 +188,8 @@ export class Dashboard extends Component {
                             videos={videos}
                             onDeleteVideo={this.handleDeleteVideo}
                         />
-                        {/* #TODO add callback delete, use loacl state */}
                     </div>
-                </div>
+                </div> */}
 
 
                 {/* <Form /> */}

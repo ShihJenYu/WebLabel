@@ -14,18 +14,19 @@ from django_filters import rest_framework as filters
 from django.db.models import Q
 from django.contrib.auth.models import Permission, User
 
-from mysite.apps.engine.models import Project, Pack, Batch, Video, Task, WorkSpace, ProjectUser, Label, AttributeSpec
+from mysite.apps.engine.models import Project, Pack, Batch, Video, Task, WorkSpace, ProjectUser, Label, AttributeSpec, FrameStatus
 from mysite.apps.engine.serializers import (ProjectSerializer, PackSerializer,
                                             BatchSerializer, VideoSerializer,
                                             FileInfoSerializer, TaskSerializer,
                                             WorkSpaceSerializer, LabelSerializer,
-                                            AttributeSpecSerializer)
+                                            AttributeSpecSerializer, FrameStatusSerializer)
 
 
 import os
 import glob
 import time
 import json
+import csv
 from . import annotation
 
 SHARE_ROOT = '/home/jeff/Work/ShareRoot'
@@ -160,8 +161,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 tmp = convertAttribute(attribute)
                 labelsData[label['id']]['attributes'][attribute['id']] = tmp
 
-        print('labelsData', labelsData)
-
         return Response({'labelsData': labelsData})
 
 
@@ -241,16 +240,18 @@ def checkDir(path):
 
 
 class VideoFilter(filters.FilterSet):
-    project = filters.NumberFilter(
-        field_name="task__batch__pack__project__id", lookup_expr='exact', distinct=True)
-    pack = filters.NumberFilter(
-        field_name="task__batch__pack__id", lookup_expr='exact', distinct=True)
-    ids = filters.NumberFilter(
-        field_name="id", lookup_expr='exact', distinct=True)
+    project = filters.CharFilter(
+        field_name="project", lookup_expr='exact', distinct=True)
+    # project = filters.NumberFilter(
+    #     field_name="task__batch__pack__project__name", lookup_expr='exact', distinct=True)
+    # pack = filters.NumberFilter(
+    #     field_name="task__batch__pack__id", lookup_expr='exact', distinct=True)
+    # ids = filters.NumberFilter(
+    #     field_name="id", lookup_expr='exact', distinct=True)
 
     class Meta:
         model = Video
-        fields = ['project', 'pack']
+        fields = ['project', ]
 
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -302,12 +303,16 @@ class VideoViewSet(viewsets.ModelViewSet):
 
 
 class TaskFilter(filters.FilterSet):
+    project = filters.NumberFilter(
+        field_name="video__project_id", lookup_expr='exact', distinct=True)
+    pack = filters.NumberFilter(
+        field_name="batch__pack_id", lookup_expr='exact', distinct=True)
     batch = filters.NumberFilter(
-        field_name="batch__id", lookup_expr='exact', distinct=True)
+        field_name="batch_id", lookup_expr='exact', distinct=True)
 
     class Meta:
         model = Task
-        fields = ['batch']
+        fields = ['project', 'pack']
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -316,6 +321,13 @@ class TaskViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.DjangoFilterBackend]
     filter_class = TaskFilter
 
+    @action(detail=True, methods=['GET'])
+    def project(self, request, pk):
+        if request.method == 'GET':
+            task = Task.objects.get(id=pk)
+            db_project = task.video.project
+            return Response({'id': db_project.id, 'name': db_project.name}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['GET', 'PATCH'])
     def annotations(self, request, pk):
         if request.method == 'GET':
@@ -323,12 +335,6 @@ class TaskViewSet(viewsets.ModelViewSet):
             max_id = task.maxshape_id
 
             data = annotation.get_task_data(pk, request.user)
-
-            # data = [{'id': 0, 'frame': 0, 'shapetype': 'rectangle', 'point': '10,10,50,50', 'label': 1, 'attrs': {'1': 'false', '2': '1'}},
-            #         {'id': 1, 'frame': 0, 'shapetype': 'rectangle', 'point': '100,100,150,150',
-            #             'label': 1, 'attrs': {'1': 'true', '2': '2'}},
-            #         {'id': 2, 'frame': 0, 'shapetype': 'rectangle', 'point': '210,210,250,250', 'label': 1, 'attrs': {'1': 'false', '2': '3'}}, ]
-
             output = {'data': data, 'maxID': max_id}
             headers = self.get_success_headers(output)
             return Response(output, status=status.HTTP_201_CREATED,
@@ -342,6 +348,79 @@ class TaskViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 return Response({'data': data, 'maxID': max_id}, status=status.HTTP_400_BAD_REQUEST)
             return Response(data)
+
+    @action(detail=False, methods=['POST'])
+    def create_tasks(self, request):
+        param = request.data
+        print(param)
+
+        createMode = param['createMode']
+        videoList = param['videoList']
+        print('createMode', createMode)
+        data = []
+
+        if createMode == 'video':
+            for a_video in videoList:
+                data.append({
+                    'name': a_video['folder'],
+                    'path': a_video['path'],
+                    'isfolder': True,
+                    'video': a_video['id'],
+                    'batch': None,
+                    'maxshape_id': 0,
+                })
+
+        elif createMode == 'frame':
+            for a_video in videoList:
+                print(a_video, 'has\n', sorted(os.listdir(a_video['path'])))
+                for a_frame in sorted(os.listdir(a_video['path'])):
+                    data.append({
+                        'name': a_frame,
+                        'path': os.path.join(a_video['path'], a_frame),
+                        'isfolder': False,
+                        'video': a_video['id'],
+                        'batch': None,
+                        'maxshape_id': 0,
+                    })
+
+        else:
+            return Response("createMode error", status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(
+            data=data, many=isinstance(data, list))
+        print('data', data)
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            print(serializer.data)
+            db_frames = []
+            if createMode == 'video':
+                for a_video in serializer.data:
+                    for a_frame in sorted(os.listdir(a_video['path'])):
+                        db_frame = FrameStatus(
+                            name=a_frame,
+                            checked=False,
+                            defect=False,
+                            task_id=a_video['id']
+                        )
+                        db_frames.append(db_frame)
+            elif createMode == 'frame':
+                for a_frame in serializer.data:
+                    db_frame = FrameStatus(
+                        name=a_frame['name'],
+                        checked=False,
+                        defect=False,
+                        task_id=a_frame['id']
+                    )
+                    db_frames.append(db_frame)
+            db_frames = FrameStatus.objects.bulk_create(db_frames)
+            frameStatusSerializer = FrameStatusSerializer(
+                db_frames, many=True, context={"request": request})
+
+            return Response({'tasks': serializer.data, 'frames': frameStatusSerializer.data},
+                            status=status.HTTP_201_CREATED,
+                            headers=headers)
+        return Response('success')
 
 
 class LabelFilter(filters.FilterSet):
@@ -605,3 +684,67 @@ class ServerViewSet(viewsets.ViewSet):
                         id__in=update_task_ids).update(batch=batch_qs)
 
         return Response(request.data)
+
+    @staticmethod
+    @action(detail=False, methods=['POST'])
+    def upload_listfile(request):
+        params = request.POST.dict()
+        action = params['action']
+
+        if action == 'videolist':
+            file_list = request.FILES.getlist('file')
+            file_content = ''
+            data = {}
+            for chunk in file_list[0].chunks():
+                file_content += chunk.decode('utf-8')
+            for line in file_content.splitlines():
+                project = line.split('/', 1)[0]
+                db_project = Project.objects.filter(name=project).first()
+                if db_project:
+                    folder = os.path.join(SHARE_ROOT, line)
+                    imgs = glob.glob(os.path.join(folder, '**/*.jpg'))
+                    print(len(imgs))
+                    for img in imgs:
+                        videoname = os.path.relpath(
+                            os.path.dirname(img), SHARE_ROOT).split('/', 1)[-1]
+                        if not videoname in data:
+                            data[videoname] = [
+                                db_project.id, os.path.dirname(img)]
+                            print(videoname, data[videoname])
+            print(len(data.keys()))
+            print(data)
+
+            for name in data:
+                project, path = data[name]
+                print(name, project, path)
+                video, created = Video.objects.get_or_create(
+                    project_id=project, folder=name)
+                video.path = path
+                video.save()
+
+            return Response({'data': data})
+        elif action == 'batchlist':
+            file_list = request.FILES.getlist('file')
+            file_content = ''
+            for chunk in file_list[0].chunks():
+                file_content += chunk.decode('utf-8')
+            data = csv.DictReader(file_content.splitlines())
+            print(data)
+            for row in data:
+                print(row)
+                db_project = Project.objects.filter(
+                    name=row['project']).first()
+                if db_project:
+                    project_id = db_project.id
+                    db_task = Task.objects.filter(
+                        name=row['task'], video__project_id=project_id).first()
+                    print(db_task)
+                    if db_task:
+                        db_pack, created = Pack.objects.get_or_create(
+                            name=row['pack'], project_id=project_id)
+                        db_batch, created = Batch.objects.get_or_create(
+                            name=row['batch'], pack_id=db_pack.id)
+                        db_task.batch = db_batch
+                        db_task.save()
+
+            return Response({'data': 'success'})

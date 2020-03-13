@@ -55,7 +55,6 @@ class TaskAnnotation:
             data['attrs'] = {}
             for attr in attrs:
                 data['attrs'][attr.spec_id] = attr.value
-                print('hahaha', attr.value)
             self.data.append(data)
 
     def save_to_db(self, shapes):
@@ -82,7 +81,6 @@ class TaskAnnotation:
             for attr in attributes:
                 if isinstance(attributes[attr], list):
                     attributes[attr] = ';'.join(attributes[attr])
-                print('hahaha', attributes[attr], type(attributes[attr]))
                 db_attrval = models.LabeledShapeAttributeVal(
                     spec_id=attr,
                     value=attributes[attr]

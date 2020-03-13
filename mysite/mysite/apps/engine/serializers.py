@@ -65,19 +65,23 @@ class BatchSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     # pack = serializers.IntegerField(write_only=True, source='pack.id')
+    batch_name = serializers.ReadOnlyField(source='batch.name')
 
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = ('id', 'name', 'path', 'isfolder', 'video',
+                  'batch', 'batch_name', 'maxshape_id')
+
+        # fields = ('id', 'name', 'path', 'isfolder', 'video')
 
 
 class VideoSerializer(serializers.ModelSerializer):
-    isFolder = serializers.BooleanField(
-        write_only=True, source='task.isfolder')
+    # isFolder = serializers.BooleanField(
+    #     write_only=True, source='task.isfolder')
 
     class Meta:
         model = Video
-        fields = ('id', 'folder', 'path', 'isFolder')
+        fields = ('id', 'folder', 'path', 'project')
         # fields = '__all__'
 
     def create(self, validated_data):
@@ -89,37 +93,37 @@ class VideoSerializer(serializers.ModelSerializer):
         video = Video.objects.create(**validated_data)
         # print('isfolder....', isfolder)
 
-        images = []
-        types = ('*.jpg', '*.png')  # the tuple of file types
-        for files in types:
-            images.extend(glob.glob(os.path.join(
-                validated_data['path'], files)))
+        # images = []
+        # types = ('*.jpg', '*.png')  # the tuple of file types
+        # for files in types:
+        #     images.extend(glob.glob(os.path.join(
+        #         validated_data['path'], files)))
 
-        if isfolder:
-            # like apa, dms, one folder - one task - one user processs
-            a_path = validated_data['path']
-            basename = os.path.basename(a_path)
-            task = Task.objects.create(name=basename, path=a_path,
-                                       isfolder=isfolder, video_id=video.id)
-            tmp = []
-            for img_path in images:
-                basename = os.path.basename(img_path)
-                tmp.append(FrameStatus(name=basename, task_id=task.id))
-            frameStatuses = FrameStatus.objects.bulk_create(tmp)
-        else:
-            tmp = []
-            for a_path in images:
-                basename = os.path.basename(a_path)
-                filename = os.path.splitext(basename)[0]
-                tmp.append(Task(name=filename, path=a_path,
-                                isfolder=isfolder, video_id=video.id))
-            tasks = Task.objects.bulk_create(tmp)
+        # if isfolder:
+        #     # like apa, dms, one folder - one task - one user processs
+        #     a_path = validated_data['path']
+        #     basename = os.path.basename(a_path)
+        #     task = Task.objects.create(name=basename, path=a_path,
+        #                                isfolder=isfolder, video_id=video.id)
+        #     tmp = []
+        #     for img_path in images:
+        #         basename = os.path.basename(img_path)
+        #         tmp.append(FrameStatus(name=basename, task_id=task.id))
+        #     frameStatuses = FrameStatus.objects.bulk_create(tmp)
+        # else:
+        #     tmp = []
+        #     for a_path in images:
+        #         basename = os.path.basename(a_path)
+        #         filename = os.path.splitext(basename)[0]
+        #         tmp.append(Task(name=filename, path=a_path,
+        #                         isfolder=isfolder, video_id=video.id))
+        #     tasks = Task.objects.bulk_create(tmp)
 
-            tmp = []
-            for task in tasks:
-                basename = os.path.basename(task.path)
-                tmp.append(FrameStatus(name=basename, task_id=task.id))
-            frameStatuses = FrameStatus.objects.bulk_create(tmp)
+        #     tmp = []
+        #     for task in tasks:
+        #         basename = os.path.basename(task.path)
+        #         tmp.append(FrameStatus(name=basename, task_id=task.id))
+        #     frameStatuses = FrameStatus.objects.bulk_create(tmp)
 
         return video
 
@@ -158,3 +162,9 @@ class LabelSerializer(serializers.ModelSerializer):
         model = Label
         # fields = '__all__'
         fields = ('id', 'name', 'project', 'order', 'attributes')
+
+
+class FrameStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FrameStatus
+        fields = '__all__'

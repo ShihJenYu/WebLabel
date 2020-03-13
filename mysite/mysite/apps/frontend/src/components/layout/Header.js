@@ -44,6 +44,7 @@ export class Header extends Component {
                     <NavLink to="/project" className="nav-link" activeClassName="active">Project</NavLink>
                     <NavLink to="/pack" className="nav-link" activeClassName="active">Pack</NavLink>
                     <NavLink to="/batch" className="nav-link" activeClassName="active">Batch</NavLink>
+                    <NavLink to="/task" className="nav-link" activeClassName="active">Task</NavLink>
                     <NavLink to="/video" className="nav-link" activeClassName="active">Video</NavLink>
                 </>
             );

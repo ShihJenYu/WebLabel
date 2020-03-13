@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
+import { IconButton } from '@material-ui/core';
+import RefreshIcon from '@material-ui/icons/Refresh';
+
 export class PackSelect extends Component {
     constructor(props) {
         super(props);
@@ -40,6 +43,12 @@ export class PackSelect extends Component {
         }, () => { this.sendData(); });
     }
 
+    resetSelected = () => {
+        const { onPackChange } = this.props;
+        this.setState({ currentPack: { id: null, name: null } });
+        onPackChange({ id: null, name: null });
+    }
+
     render() {
         const { currentPack } = this.state;
         const { projectPacks } = this.props;
@@ -58,6 +67,18 @@ export class PackSelect extends Component {
                         <option key={pack.id} value={pack.id}>{pack.name}</option>
                     ))}
                 </select>
+                <div className="input-group-append">
+                    <span className="input-group-text">
+                        <IconButton
+                            aria-label="reset"
+                            size="medium"
+                            style={{ margin: 0, padding: 0 }}
+                            onClick={this.resetSelected}
+                        >
+                            <RefreshIcon fontSize="default" />
+                        </IconButton>
+                    </span>
+                </div>
             </div>
         );
     }

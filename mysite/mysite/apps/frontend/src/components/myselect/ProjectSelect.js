@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import axios from 'axios';
 import { getProjects } from '../../actions/projects';
 
+import { IconButton } from '@material-ui/core';
+import RefreshIcon from '@material-ui/icons/Refresh';
 
 export class ProjectSelect extends Component {
     constructor(props) {
@@ -40,11 +42,17 @@ export class ProjectSelect extends Component {
         }, () => { this.sendData(); });
     }
 
+    resetSelected = () => {
+        const { onProjectChange } = this.props;
+        this.setState({ currentProject: null });
+        onProjectChange({ id: null, name: null }, []);
+    }
+
     render() {
         const { currentProject } = this.state;
         const { projects } = this.props;
-        const projectname = (currentProject == null) ? '' : currentProject.name;
-        console.log('projectname', projectname);
+        const selectedValue = (currentProject == null) ? 'DEFAULT' : currentProject.id;
+        console.log('project id', selectedValue);
         return (
             <div className="input-group">
                 <div className="input-group-prepend">
@@ -52,12 +60,24 @@ export class ProjectSelect extends Component {
                         Project:
                     </span>
                 </div>
-                <select defaultValue="DEFAULT" className="form-control" id="projectSelect" name="project" onChange={this.onChange}>
+                <select className="form-control" id="projectSelect" name="project" value={selectedValue} onChange={this.onChange}>
                     <option disabled value="DEFAULT"> -- select an option -- </option>
                     {projects.map((project) => (
                         <option key={project.id} value={project.id}>{project.name}</option>
                     ))}
                 </select>
+                <div className="input-group-append">
+                    <span className="input-group-text">
+                        <IconButton
+                            aria-label="reset"
+                            size="medium"
+                            style={{ margin: 0, padding: 0 }}
+                            onClick={this.resetSelected}
+                        >
+                            <RefreshIcon fontSize="default" />
+                        </IconButton>
+                    </span>
+                </div>
             </div>
         );
     }

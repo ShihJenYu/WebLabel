@@ -101,7 +101,7 @@ export class TabsPanels extends Component {
         } = this.state;
         const { annotations, labels, accordion1BodyH } = this.props;
         let objects = '';
-        if (annotations) {
+        if (annotations && Object.keys(labels).length) {
             objects = annotations.map((annotatation) => (
                 <div
                     key={annotatation.id}

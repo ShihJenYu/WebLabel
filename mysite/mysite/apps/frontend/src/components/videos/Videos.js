@@ -2,7 +2,8 @@ import React, { Component, forwardRef } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import MaterialTable from 'material-table';
+import MaterialTable, { MTableToolbar } from 'material-table';
+import Chip from '@material-ui/core/Chip';
 
 import AddBox from '@material-ui/icons/AddBox';
 import ArrowDownward from '@material-ui/icons/ArrowDownward';
@@ -19,6 +20,8 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
+import Refresh from '@material-ui/icons/Refresh';
+import PlaylistAddCheckIcon from '@material-ui/icons/PlaylistAddCheck';
 
 const tableIcons = {
     Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -38,9 +41,16 @@ const tableIcons = {
     SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
     ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
     ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
+    Refresh: forwardRef((props, ref) => <Refresh {...props} ref={ref} />),
+    PlaylistAddCheckIcon: forwardRef((props, ref) => <Refresh {...props} ref={ref} />),
 };
 
 export class Videos extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {};
+    }
+
     componentDidMount() {
     }
 
@@ -51,18 +61,29 @@ export class Videos extends Component {
         onDeleteVideo(id);
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    async create_tasks(mode, selectedVideos) {
+        console.log('createMode', mode);
+        console.log('videoList', selectedVideos);
+        const res = await axios.post('/api/v1/tasks/create_tasks/', { createMode: mode, videoList: selectedVideos });
+        console.log('res.data', res.data);
+    }
+
     render() {
-        const { videos } = this.props;
+        const { videos, refreshVideos } = this.props;
 
         const m_columns = [
-            { title: 'ID', field: 'id' },
+            // { title: 'ID', field: 'id' },
             { title: 'Folder', field: 'folder' },
+            { title: 'Path', field: 'path' },
         ];
-
         const m_options = {
             filtering: true,
-            pageSizeOptions: [10, 20],
-            pageSize: 10,
+            selection: true,
+            // pageSizeOptions: [10, 20],
+            paging: false,
+            // pageSize: 10,
+            maxBodyHeight: 600,
         };
 
         return (
@@ -74,12 +95,52 @@ export class Videos extends Component {
                     data={videos}
                     options={m_options}
                     editable={{
-                        onRowDelete: (oldData) => new Promise((resolve) => {
-                            setTimeout(() => {
-                                this.delete_video(oldData.id);
-                                resolve();
-                            }, 100);
-                        }),
+                        // onRowDelete: (oldData) => new Promise((resolve) => {
+                        //     setTimeout(() => {
+                        //         this.delete_video(oldData.id);
+                        //         resolve();
+                        //     }, 100);
+                        // }),
+                    }}
+                    actions={[
+                        {
+                            icon: Refresh,
+                            tooltip: 'Refresh Data',
+                            isFreeAction: true,
+                            onClick: () => { refreshVideos(); },
+                        },
+                        // {
+                        //     icon: PlaylistAddCheckIcon,
+                        //     tooltip: 'create task',
+                        //     onClick: (evt, data) => { alert(`You selected ${data.length} rows`); },
+                        // },
+                    ]}
+                    components={{
+                        Toolbar: (props) => (
+                            <div>
+                                <MTableToolbar {...props} />
+                                <div style={{ padding: '0px 10px' }}>
+                                    <Chip
+                                        label="create task (video)"
+                                        color="secondary"
+                                        style={{ marginRight: 5, fontSize: 18 }}
+                                        onClick={() => {
+                                            console.log(`create task (video) ${props.selectedRows.length} rows`);
+                                            this.create_tasks('video', props.selectedRows);
+                                        }}
+                                    />
+                                    <Chip
+                                        label="create task (frame)"
+                                        color="secondary"
+                                        style={{ marginRight: 5, fontSize: 18 }}
+                                        onClick={() => {
+                                            console.log(`create task (frame) ${props.selectedRows.length} rows`);
+                                            this.create_tasks('frame', props.selectedRows);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        ),
                     }}
                 />
             </>
@@ -90,6 +151,7 @@ export class Videos extends Component {
 Videos.propTypes = {
     videos: PropTypes.arrayOf(PropTypes.object).isRequired,
     onDeleteVideo: PropTypes.func.isRequired,
+    refreshVideos: PropTypes.func.isRequired,
 };
 
 export default connect(null, {})(Videos);
