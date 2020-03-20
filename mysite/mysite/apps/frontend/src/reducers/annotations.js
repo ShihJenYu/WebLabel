@@ -1,6 +1,7 @@
 import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
-    CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH,
+    CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
+    SET_CURRENTFRAME, GET_INITDATA,
 } from '../actions/types';
 
 const initialStata = {
@@ -11,15 +12,27 @@ const initialStata = {
     selectedObject: {},
     defaultLabelID: null,
     accordion1BodyH: null,
+    frameStatus: [{}],
+    currentFrame: 0,
+    initialed: false,
 };
 
 export default function (state = initialStata, action) {
     switch (action.type) {
+        case GET_INITDATA:
+            return {
+                ...state,
+                projectID: action.payload.project.id,
+                labels: action.payload.labels,
+                annotations: action.payload.annotations,
+                maxID: action.payload.maxID,
+                frameStatus: action.payload.frameStatus,
+                initialed: true,
+            };
         case GET_ANNOTATIONS:
             return {
                 ...state,
-                projectID: action.payload.projectID,
-                annotations: action.payload.data,
+                annotations: action.payload.annotations,
                 maxID: action.payload.maxID,
             };
         case PATCH_ANNOTATIONS:
@@ -32,6 +45,11 @@ export default function (state = initialStata, action) {
             return {
                 ...state,
                 labels: action.payload.labelsData,
+            };
+        case GET_FRAMESTATUS:
+            return {
+                ...state,
+                frameStatus: action.payload.frameStatus,
             };
         case CHANGE_LABEL:
             console.log('CHANGE_LABEL', action.payload);
@@ -104,6 +122,11 @@ export default function (state = initialStata, action) {
             return {
                 ...state,
                 accordion1BodyH: action.payload,
+            };
+        case SET_CURRENTFRAME:
+            return {
+                ...state,
+                currentFrame: action.payload,
             };
         default:
             return state;

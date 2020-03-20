@@ -15,6 +15,7 @@ django-filter = "*"
 djoser = "*"
 djangorestframework-jwt = "*"
 djangorestframework-simplejwt = "*"
+django-sendfile = "*"
 
 [requires]
 python_version = "3.6"

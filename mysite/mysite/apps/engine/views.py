@@ -3,13 +3,13 @@
 
 from rest_framework import viewsets
 from rest_framework import status
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.filters import OrderingFilter
 
 from django_filters import rest_framework as filters
-
+from sendfile import sendfile
 
 from django.db.models import Q
 from django.contrib.auth.models import Permission, User
@@ -335,9 +335,9 @@ class TaskViewSet(viewsets.ModelViewSet):
             max_id = task.maxshape_id
 
             data = annotation.get_task_data(pk, request.user)
-            output = {'data': data, 'maxID': max_id}
+            output = {'annotations': data, 'maxID': max_id}
             headers = self.get_success_headers(output)
-            return Response(output, status=status.HTTP_201_CREATED,
+            return Response(output, status=status.HTTP_200_OK,
                             headers=headers)
         elif request.method == 'PATCH':
             try:
@@ -348,6 +348,50 @@ class TaskViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 return Response({'data': data, 'maxID': max_id}, status=status.HTTP_400_BAD_REQUEST)
             return Response(data)
+
+    @action(detail=True, methods=['GET'])
+    def framestatus(self, request, pk):
+        db_task = None
+        try:
+            db_task = Task.objects.get(id=pk)
+        except Exception as e:
+            return Response('task is not exist', status=status.HTTP_400_BAD_REQUEST)
+
+        db_frameStatus = FrameStatus.objects.filter(
+            task_id=db_task.id).order_by('name')
+        serializer = FrameStatusSerializer(
+            db_frameStatus, many=True, context={"request": request})
+
+        output = {'frameStatus': serializer.data}
+        headers = self.get_success_headers(output)
+        return Response(output, status=status.HTTP_200_OK,
+                        headers=headers)
+
+    @action(detail=True, methods=['GET'], permission_classes=[AllowAny], authentication_classes=[])
+    def get_frame(self, request, pk):
+        frame_id = self.request.query_params.get('id')
+        print("pk", pk, 'frame_id', frame_id)
+
+        db_task = None
+        db_frameStatus = None
+
+        try:
+            db_task = Task.objects.get(id=pk)
+        except Exception as e:
+            return Response('task is not exist', status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            db_frameStatus = FrameStatus.objects.get(id=frame_id, task_id=pk)
+        except Exception as e:
+            return Response('frame is not exist', status=status.HTTP_400_BAD_REQUEST)
+
+        file_path = None
+        if db_task.isfolder:
+            file_path = os.path.join(db_task.path, db_frameStatus.name)
+        else:
+            file_path = db_task.path
+
+        return sendfile(request, file_path)
 
     @action(detail=False, methods=['POST'])
     def create_tasks(self, request):

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'djoser',
+    'sendfile',
     'mysite.apps.engine',
     'mysite.apps.frontend',
 
@@ -155,3 +156,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+SENDFILE_BACKEND = "sendfile.backends.mod_wsgi"
+SENDFILE_ROOT = '/home/jeff/Work/ShareRoot/'
+SENDFILE_URL = '/ShareRoot'
+
+# tmp use simple , need fix to use mod_wsgi
+SENDFILE_BACKEND = "sendfile.backends.simple"
