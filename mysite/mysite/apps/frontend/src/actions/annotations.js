@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
-    SET_CURRENTFRAME, GET_INITDATA,
+    SET_CURRENTFRAME, GET_INITDATA, UPDATE_OBJPOINT,
 } from './types';
 
 // GET INITDATA
@@ -166,5 +166,15 @@ export const setCurrentFrame = (frame) => (dispatch) => {
     dispatch({
         type: SET_CURRENTFRAME,
         payload: frame,
+    });
+};
+
+// update objPoint
+export const updateObjPoint = (shapeIndex, points) => (dispatch) => {
+    dispatch({
+        type: UPDATE_OBJPOINT,
+        payload: {
+            shapeIndex, points,
+        },
     });
 };

@@ -25,6 +25,7 @@ export class TabsPanels extends Component {
 
     render() {
         const { activeTab } = this.state;
+        console.log('render tabspanels');
 
         return (
             <Tab.Container id="left-tabs-example" onSelect={this.handleSelect} activeKey={activeTab}>

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import axios from 'axios';
 
+import PlayerFrame from './PlayerFrame';
 import { Players } from '../players/Players';
 import { TabsPanels } from '../tabspanels/TabsPanels';
 
@@ -18,7 +19,8 @@ import FrameProvider from './FrameProvider';
 export class Annotation extends Component {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {
+        };
         const token = localStorage.getItem('jwt_token');
         axios.defaults.headers.common.Authorization = `JWT ${token}`;
     }
@@ -108,9 +110,9 @@ export class Annotation extends Component {
         changeDefaultLabel(labelID);
     }
 
-    createNewTest = () => {
+    createNewTest = (points) => {
         const {
-            createObject, defaultLabelID, labels, maxID,
+            createObject, defaultLabelID, labels, maxID, currentFrame,
         } = this.props;
 
         const selectedDefaultAttrs = labels[defaultLabelID].attributes;
@@ -122,10 +124,10 @@ export class Annotation extends Component {
 
         const newObj = {
             id: `new_${(maxID + 1).toString()}`,
-            frame: 0,
-            shapetype: 'rectangle',
+            frame: currentFrame,
+            shapetype: 'polygon',
             shapeid: `new_${(maxID + 1).toString()}`,
-            points: '100,100,150,150',
+            points,
             label: +defaultLabelID,
             attrs,
         };
@@ -148,22 +150,8 @@ export class Annotation extends Component {
 
         this.setCurrentImage(currentFrame);
         // this.getCurrentImage(currentFrame);
-        const bg_img_src = (currentImage) ? currentImage.src : '';
-        const bg_img_width = (currentImage) ? currentImage.width : 1;
-        const bg_img_height = (currentImage) ? currentImage.height : 1;
 
-        if (this.geometry && this.playerFrameCell) {
-            this.geometry.width = this.playerFrameCell.clientWidth;
-            this.geometry.height = this.playerFrameCell.clientHeight;
-            this.geometry.scale = Math.min(this.geometry.width / bg_img_width, this.geometry.height / bg_img_height);
-            this.geometry.left = (this.geometry.width - bg_img_width * this.geometry.scale) / 2;
-            this.geometry.top = (this.geometry.height - bg_img_height * this.geometry.scale) / 2;
-            console.log('this.geometry.width', this.geometry.width, this.geometry.height);
-        }
 
-        const geometryScale = (this.geometry) ? this.geometry.scale : 1;
-        const geometryLeft = (this.geometry) ? this.geometry.left : 0;
-        const geometryTop = (this.geometry) ? this.geometry.top : 0;
         return (
             <div className="container-fluid" style={{ height: '100%' }}>
                 <div className="row" style={{ height: '100%' }}>
@@ -182,33 +170,11 @@ export class Annotation extends Component {
                             style={{ background: 'slategray' }}
                             ref={(cell) => { this.playerFrameCell = cell; }}
                         >
-                            <div id="playerFrame">
-                                <svg
-                                    id="frameContent"
-                                    style={{
-                                        position: 'absolute',
-                                        zIndex: 1,
-                                        mozTransformOrigin: 'top left',
-                                        webkitTransformOrigin: 'top left',
-                                    }}
-                                />
-                                <svg
-                                    id="frameBackground"
-                                    style={{
-                                        position: 'absolute',
-                                        zIndex: 0,
-                                        backgroundRepeat: 'no-repeat',
-                                        mozTransformOrigin: 'top left',
-                                        webkitTransformOrigin: 'top left',
-                                        backgroundImage: `url(${bg_img_src})`,
-                                        width: bg_img_width,
-                                        height: bg_img_height,
-                                        left: geometryLeft,
-                                        top: 34 + geometryTop,
-                                        transform: `scale(${geometryScale})`,
-                                    }}
-                                />
-                            </div>
+                            <PlayerFrame
+                                currentImage={currentImage}
+                                geometry={this.geometry}
+                                createNewObj={this.createNewTest}
+                            />
                         </div>
                         <Players frameStatus={frameStatus} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} />
                     </div>

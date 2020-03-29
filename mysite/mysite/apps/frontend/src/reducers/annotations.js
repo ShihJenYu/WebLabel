@@ -1,7 +1,7 @@
 import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
-    SET_CURRENTFRAME, GET_INITDATA,
+    SET_CURRENTFRAME, GET_INITDATA, UPDATE_OBJPOINT,
 } from '../actions/types';
 
 const initialStata = {
@@ -27,6 +27,7 @@ export default function (state = initialStata, action) {
                 annotations: action.payload.annotations,
                 maxID: action.payload.maxID,
                 frameStatus: action.payload.frameStatus,
+                defaultLabelID: +Object.keys(action.payload.labels)[0],
                 initialed: true,
             };
         case GET_ANNOTATIONS:
@@ -128,6 +129,17 @@ export default function (state = initialStata, action) {
                 ...state,
                 currentFrame: action.payload,
             };
+        case UPDATE_OBJPOINT: {
+            const { annotations } = state;
+            const {
+                shapeIndex, points,
+            } = action.payload;
+            annotations[shapeIndex].points = points;
+            return {
+                ...state,
+                annotations,
+            };
+        }
         default:
             return state;
     }

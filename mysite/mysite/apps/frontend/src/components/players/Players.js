@@ -87,6 +87,7 @@ export class Players extends Component {
     }
 
     render() {
+        console.log('render palyer');
         const { frameStatus, currentFrame } = this.props;
         const { isplaying } = this.state;
 

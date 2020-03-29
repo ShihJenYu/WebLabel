@@ -87,11 +87,15 @@
                 "handlers": [
                     "onMouseDown",
                     "onMouseUp",
-                    "onKeyPress",
-                    "onKeyDown",
+                    // "onKeyPress",
+                    // "onKeyDown",
                     "onKeyUp"
                 ]
             }
+        ],
+        "max-classes-per-file": [
+            "error",
+            10
         ]
     }
 }
