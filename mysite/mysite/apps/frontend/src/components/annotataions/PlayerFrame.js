@@ -9,8 +9,20 @@ export class PlayerFrame extends Component {
         super(props);
         this.state = {
             action: 'none', // none , drawing
+            shapeType: '',
             points: [],
         };
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        if (nextProps.shapeType !== prevState.shapeType) {
+            return {
+                ...prevState,
+                shapeType: nextProps.shapeType,
+                points: [],
+            };
+        }
+        return null;
     }
 
     translateSVGPos = (svgCanvas, clientX, clientY) => {
@@ -34,7 +46,8 @@ export class PlayerFrame extends Component {
     testOnClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const { action, points } = this.state;
+        const { createNewObj } = this.props;
+        const { action, points, shapeType } = this.state;
         if (action === 'drawing') {
             // console.log('testOnClick', e.target);
             // console.log('testOnClick', e.clientX, e.clientY);
@@ -44,7 +57,15 @@ export class PlayerFrame extends Component {
             //     const last = points.pop();
             //     console.log('testOnClick', last);
             // }
-            this.setState({ points: [...points, pt] });
+            if (shapeType === 'rectangle' && points.length > 0) {
+                const mousePt = points.pop();
+                const points_str = this.pointsArrayToString([...points, pt]);
+                this.setState({ action: 'none', points: [] });
+                createNewObj(points_str, shapeType); // shapetype
+            } else {
+                this.setState({ points: [...points, pt] });
+
+            }
         }
     }
 
@@ -87,7 +108,7 @@ export class PlayerFrame extends Component {
     }
 
     handleKeyPress = (e) => {
-        const { action, points } = this.state;
+        const { action, points, shapeType } = this.state;
         const { createNewObj } = this.props;
 
         if (e.key === 'Q' || e.key === 'q') {
@@ -98,28 +119,66 @@ export class PlayerFrame extends Component {
                 const mousePt = points.pop();
                 const points_str = this.pointsArrayToString(points);
                 this.setState({ action: 'none', points: [] });
-                createNewObj(points_str);
+                if (shapeType === 'rectangle') {
+                    if (points.length === 2) {
+                        createNewObj(points_str, shapeType); // shapetype
+                    }
+                } else if (shapeType === 'polygon') {
+                    if (points.length > 2) {
+                        createNewObj(points_str, shapeType); // shapetype
+                    }
+                } else if (shapeType === 'polyline') {
+                    if (points.length > 1) {
+                        createNewObj(points_str, shapeType); // shapetype
+                    }
+                } else if (shapeType === 'points') {
+                    if (points.length > 0) {
+                        createNewObj(points_str, shapeType); // shapetype
+                    }
+                }
+
+
+
             }
         }
     }
 
     drawShapes = () => {
-        const { currentFrame, annotations } = this.props;
-        console.log(currentFrame, annotations);
+        const { currentFrame, annotations, selectedObject } = this.props;
+        // console.log(currentFrame, annotations);
 
         const shapes = [];
+        const selectedShape = { index: null, obj: null };
         annotations.forEach((obj, index) => {
             if (obj.frame === currentFrame) {
-                shapes.push(
-                    <AnnoShape
-                        points={obj.points}
-                        shapeIndex={index}
-                        shapetype={obj.shapetype}
-                    />,
-                );
+                if (obj.id === selectedObject.id) {
+                    selectedShape.index = index;
+                    selectedShape.obj = obj;
+                } else {
+                    shapes.push(
+                        <AnnoShape
+                            objID={obj.id}
+                            points={obj.points}
+                            shapeIndex={index}
+                            shapetype={obj.shapetype}
+                            selected={false}
+                        />,
+                    );
+                }
             }
         });
-        console.log(shapes);
+        console.log('selectedShape', selectedShape);
+        if (selectedShape.index !== null) {
+            shapes.push(
+                <AnnoShape
+                    objID={selectedShape.obj.id}
+                    points={selectedShape.obj.points}
+                    shapeIndex={selectedShape.index}
+                    shapetype={selectedShape.obj.shapetype}
+                    selected
+                />,
+            );
+        }
 
         return (shapes);
     }
@@ -131,8 +190,8 @@ export class PlayerFrame extends Component {
     }
 
     render() {
-        console.log('render palyerFrame');
-        const { points } = this.state;
+        // console.log('render palyerFrame');
+        const { points, shapeType } = this.state;
         const { currentImage, geometry } = this.props;
 
         const bg_img_src = (currentImage) ? currentImage.src : '';
@@ -154,9 +213,116 @@ export class PlayerFrame extends Component {
 
         let points_str = '';
         points_str = this.pointsArrayToString(points);
-        console.log('points_str:', points_str);
+        // console.log('points_str:', points_str);
 
         const shapes = this.drawShapes();
+
+        let drawingTemp = '';
+
+
+        switch (shapeType) {
+            case 'rectangle': {
+                const shapeBox = {
+                    xtl: Number.MAX_SAFE_INTEGER,
+                    ytl: Number.MAX_SAFE_INTEGER,
+                    xbr: Number.MIN_SAFE_INTEGER,
+                    ybr: Number.MIN_SAFE_INTEGER,
+                };
+                points.forEach((point) => {
+                    shapeBox.xtl = Math.min(shapeBox.xtl, point.x);
+                    shapeBox.ytl = Math.min(shapeBox.ytl, point.y);
+                    shapeBox.xbr = Math.max(shapeBox.xbr, point.x);
+                    shapeBox.ybr = Math.max(shapeBox.ybr, point.y);
+                });
+                drawingTemp = (
+                    <>
+                        <rect
+                            x={shapeBox.xtl}
+                            y={shapeBox.ytl}
+                            width={shapeBox.xbr - shapeBox.xtl}
+                            height={shapeBox.ybr - shapeBox.ytl}
+                            fill="#ffcc00"
+                            stroke="#ffcc00"
+                            strokeWidth="2"
+                            fillOpacity="0"
+                            strokeOpacity="1"
+                            zorder="9999999"
+                        />
+                        <g fill="white" stroke="green">
+                            {points.map((pt, pid) => (
+                                <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r="2"
+                                />
+                            ))}
+                        </g>
+                    </>
+                ); break;
+            }
+            case 'polygon':
+                drawingTemp = (
+                    <>
+                        <polygon
+                            points={points_str}
+                            fill="#ffcc00"
+                            stroke="#ffcc00"
+                            strokeWidth="2"
+                            fillOpacity="0"
+                            strokeOpacity="1"
+                            zorder="9999999"
+                        />
+                        <g fill="white" stroke="green">
+                            {points.map((pt, pid) => (
+                                <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r="2"
+                                />
+                            ))}
+                        </g>
+                    </>
+                ); break;
+            case 'polyline':
+                drawingTemp = (
+                    <>
+                        <polyline
+                            points={points_str}
+                            fill="#ffcc00"
+                            stroke="#ffcc00"
+                            strokeWidth="2"
+                            fillOpacity="0"
+                            strokeOpacity="1"
+                            zorder="9999999"
+                        />
+                        <g fill="white" stroke="green">
+                            {points.map((pt, pid) => (
+                                <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r="2"
+                                />
+                            ))}
+                        </g>
+                    </>
+                ); break;
+            case 'points':
+                drawingTemp = (
+                    <>
+                        <g fill="white" stroke="green">
+                            {points.map((pt, pid) => (
+                                <circle
+                                    cx={pt.x}
+                                    cy={pt.y}
+                                    r="2"
+                                />
+                            ))}
+                        </g>
+                    </>
+                ); break;
+            default:
+                break;
+        }
 
         return (
             <div
@@ -188,16 +354,9 @@ export class PlayerFrame extends Component {
                         transform: `scale(${geometryScale})`,
                     }}
                 >
-                    <polygon
-                        points={points_str}
-                        fill="#ffcc00"
-                        stroke="#ffcc00"
-                        strokeWidth="2"
-                        fillOpacity="0"
-                        strokeOpacity="1"
-                        zorder="9999999"
-                    />
                     {shapes}
+                    {drawingTemp}
+
                 </svg>
                 <svg
                     id="frameBackground"
@@ -223,14 +382,18 @@ export class PlayerFrame extends Component {
 PlayerFrame.propTypes = {
     currentImage: PropTypes.any.isRequired,
     geometry: PropTypes.any.isRequired,
+    shapeType: PropTypes.string.isRequired,
     createNewObj: PropTypes.func.isRequired,
     annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
     currentFrame: PropTypes.number.isRequired,
+    selectedObject: PropTypes.object,
 };
 
 const mapStateToProps = (state) => ({
     annotations: state.annotations.annotations,
     currentFrame: state.annotations.currentFrame,
+    selectedObject: state.annotations.selectedObject,
+
 });
 
 export default connect(mapStateToProps, {})(PlayerFrame);

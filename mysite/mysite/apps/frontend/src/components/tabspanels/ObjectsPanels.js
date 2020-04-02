@@ -117,7 +117,7 @@ export class TabsPanels extends Component {
                             this.handleButtonClick2(e, annotatation.id);
                         }}
                     >
-                        {`${annotatation.shapeid} ${annotatation.shapetype}`}
+                        {`${annotatation.id} ${annotatation.shapetype}`}
                         <IconButton
                             className="float-right p-0"
                             aria-label="delete"

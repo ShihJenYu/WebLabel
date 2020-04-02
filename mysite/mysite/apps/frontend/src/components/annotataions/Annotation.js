@@ -20,7 +20,9 @@ export class Annotation extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            shapeType: 'rectangle',
         };
+        this.shapeTypes = ['rectangle', 'polygon', 'polyline', 'points'];
         const token = localStorage.getItem('jwt_token');
         axios.defaults.headers.common.Authorization = `JWT ${token}`;
     }
@@ -110,7 +112,13 @@ export class Annotation extends Component {
         changeDefaultLabel(labelID);
     }
 
-    createNewTest = (points) => {
+    onChangeDefaultShapeType = (e) => {
+        const { shapeType } = this.state;
+        console.log('onChangeDefaultShapeType', e.target.value);
+        this.setState({ shapeType: e.target.value });
+    }
+
+    createNewTest = (points, shapetype) => {
         const {
             createObject, defaultLabelID, labels, maxID, currentFrame,
         } = this.props;
@@ -125,7 +133,7 @@ export class Annotation extends Component {
         const newObj = {
             id: `new_${(maxID + 1).toString()}`,
             frame: currentFrame,
-            shapetype: 'polygon',
+            shapetype,
             shapeid: `new_${(maxID + 1).toString()}`,
             points,
             label: +defaultLabelID,
@@ -141,7 +149,7 @@ export class Annotation extends Component {
     }
 
     render() {
-        const { currentImage } = this.state;
+        const { currentImage, shapeType } = this.state;
         const {
             labels, defaultLabelID, frameStatus, currentFrame, setCurrentFrame,
         } = this.props;
@@ -162,6 +170,11 @@ export class Annotation extends Component {
                                 value={defaultLabel}
                                 onChange={this.onChangeDefaultLabel}
                             />
+                            <MultipleSelect
+                                items={this.shapeTypes}
+                                value={[shapeType]}
+                                onChange={this.onChangeDefaultShapeType}
+                            />
                             <input type="button" onClick={this.createNewTest} value="createNewTest" />
                             <input type="button" onClick={this.saveTest} value="saveTest" />
                         </div>
@@ -173,6 +186,7 @@ export class Annotation extends Component {
                             <PlayerFrame
                                 currentImage={currentImage}
                                 geometry={this.geometry}
+                                shapeType={shapeType}
                                 createNewObj={this.createNewTest}
                             />
                         </div>
