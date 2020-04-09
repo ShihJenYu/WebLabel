@@ -40,13 +40,13 @@ export class Annotation extends Component {
             this.frameProvider = new FrameProvider(this.tid, frameStatus.length - 1, frameStatus);
             this.frameProvider.printA();
             this.frameProvider.require(0);
-            this.geometry = {
-                scale: 1,
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0,
-            };
+            // this.geometry = {
+            //     scale: 1,
+            //     left: 0,
+            //     top: 0,
+            //     width: 0,
+            //     height: 0,
+            // };
             this.forceUpdate();
             // this.getCurrentImage(0);
         }
@@ -185,7 +185,7 @@ export class Annotation extends Component {
                         >
                             <PlayerFrame
                                 currentImage={currentImage}
-                                geometry={this.geometry}
+                                // geometry={this.geometry}
                                 shapeType={shapeType}
                                 createNewObj={this.createNewTest}
                             />

@@ -94,12 +94,14 @@ export default function (state = initialStata, action) {
                     return object;
                 }),
             };
-        case SELECT_OBJECT:
+        case SELECT_OBJECT: {
             console.log('SELECT_OBJECT', action.payload);
+            const selected = state.annotations.find((item) => (item.id === action.payload.id));
             return {
                 ...state,
-                selectedObject: state.annotations.find((item) => (item.id === action.payload.id)),
+                selectedObject: (selected) || {},
             };
+        }
         case CHANGE_DEFAULTLABEL:
             return {
                 ...state,

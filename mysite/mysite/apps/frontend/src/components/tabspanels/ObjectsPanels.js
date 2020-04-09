@@ -28,7 +28,7 @@ export class TabsPanels extends Component {
     }
 
     componentDidUpdate() {
-        console.log('didupdate', this.accordionAll.children[0].clientHeight);
+        // console.log('didupdate', this.accordionAll.children[0].clientHeight);
     }
 
     // 34px is right tab height, 25px is Accordion.Toggle height
@@ -38,7 +38,7 @@ export class TabsPanels extends Component {
     // TODO need re calc
 
     handleCalc = (tag) => {
-        console.log('handleCalc', tag);
+        // console.log('handleCalc', tag);
         const { aClose, bClose, cClose } = this.state;
         let naClose = aClose;
         let nbClose = bClose;
@@ -99,52 +99,54 @@ export class TabsPanels extends Component {
             bClose,
             cClose,
         } = this.state;
-        const { annotations, labels, accordion1BodyH } = this.props;
+        const { annotations, labels, accordion1BodyH, currentFrame } = this.props;
         let objects = '';
+        console.log('need find');
         if (annotations && Object.keys(labels).length) {
-            objects = annotations.map((annotatation) => (
-                <div
-                    key={annotatation.id}
-                    className="card"
-                    style={{ marginBottom: '1px' }}
-                    onClick={(e) => {
-                        this.handleButtonClick(e, annotatation.id);
-                    }}
-                >
+            objects = annotations.filter((annotation) => (annotation.frame === currentFrame))
+                .map((annotation) => (
                     <div
-                        className="card-header p-0"
+                        key={annotation.id}
+                        className="card"
+                        style={{ marginBottom: '1px' }}
                         onClick={(e) => {
-                            this.handleButtonClick2(e, annotatation.id);
+                            this.handleButtonClick(e, annotation.id);
                         }}
                     >
-                        {`${annotatation.id} ${annotatation.shapetype}`}
-                        <IconButton
-                            className="float-right p-0"
-                            aria-label="delete"
+                        <div
+                            className="card-header p-0"
                             onClick={(e) => {
-                                this.handleButtonClick3(e, annotatation.id);
+                                this.handleButtonClick2(e, annotation.id);
                             }}
                         >
-                            <CloseIcon />
-                        </IconButton>
+                            {`${annotation.id} ${annotation.shapetype}`}
+                            <IconButton
+                                className="float-right p-0"
+                                aria-label="delete"
+                                onClick={(e) => {
+                                    this.handleButtonClick3(e, annotation.id);
+                                }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </div>
+                        <div
+                            className="card-body p-1"
+                            onClick={(e) => {
+                                this.handleButtonClick4(e, annotation.id);
+                            }}
+                        >
+                            <h5 className="card-title p-1 m-0">{labels[annotation.label].name}</h5>
+                        </div>
                     </div>
-                    <div
-                        className="card-body p-1"
-                        onClick={(e) => {
-                            this.handleButtonClick4(e, annotatation.id);
-                        }}
-                    >
-                        <h5 className="card-title p-1 m-0">{labels[annotatation.label].name}</h5>
-                    </div>
-                </div>
-            ));
+                ));
         }
 
-        console.log('in render show allHeight', allHeight);
+        // console.log('in render show allHeight', allHeight);
         let hh = 157;
         let hhstr = '100vh';
         if (this.accordionAll) {
-            console.log('in render', this.accordionAll.children[0].clientHeight);
+            // console.log('in render', this.accordionAll.children[0].clientHeight);
             hh = 25 * 3 + 34;
 
             hh += (aClose) ? 0 : accordion1BodyH;
@@ -218,6 +220,7 @@ TabsPanels.propTypes = {
     annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
     selectObject: PropTypes.func.isRequired,
     deleteObject: PropTypes.func.isRequired,
+    currentFrame: PropTypes.number.isRequired,
     accordion1BodyH: PropTypes.any,
     labels: PropTypes.object,
 };
@@ -225,6 +228,7 @@ TabsPanels.propTypes = {
 const mapStateToProps = (state) => ({
     annotations: state.annotations.annotations,
     labels: state.annotations.labels,
+    currentFrame: state.annotations.currentFrame,
     accordion1BodyH: state.annotations.accordion1BodyH,
 });
 

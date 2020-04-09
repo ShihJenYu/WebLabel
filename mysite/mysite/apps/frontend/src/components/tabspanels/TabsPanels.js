@@ -6,6 +6,7 @@ import {
 } from 'react-bootstrap';
 
 import ObjectsPanels from './ObjectsPanels';
+import GroupsPanels from './GroupsPanels';
 
 
 export class TabsPanels extends Component {
@@ -25,7 +26,7 @@ export class TabsPanels extends Component {
 
     render() {
         const { activeTab } = this.state;
-        console.log('render tabspanels');
+        // console.log('render tabspanels');
 
         return (
             <Tab.Container id="left-tabs-example" onSelect={this.handleSelect} activeKey={activeTab}>
@@ -54,7 +55,7 @@ export class TabsPanels extends Component {
                                 yaya
                             </Tab.Pane>
                             <Tab.Pane eventKey="groups">
-                                sasa
+                                <GroupsPanels />
                             </Tab.Pane>
                         </Tab.Content>
                     </Col>

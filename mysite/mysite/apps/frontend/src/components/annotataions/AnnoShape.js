@@ -37,38 +37,44 @@ class Circle extends Component {
         };
     }
 
-
     handlePointerDown = (e) => {
         const { position } = this.state;
-        const el = e.target;
-        const bbox = e.target.getBoundingClientRect();
-        const x = e.clientX - bbox.left;
-        const y = e.clientY - bbox.top;
-        el.setPointerCapture(e.pointerId);
-
-        this.setState({
-            position: {
-                ...position,
-                active: true,
-                offset: { x, y },
-            },
-        });
+        // left: 0, middle: 1, right: 2
+        if (e.button === 0) {
+            const el = e.target;
+            const bbox = e.target.getBoundingClientRect();
+            const x = e.clientX - bbox.left;
+            const y = e.clientY - bbox.top;
+            el.setPointerCapture(e.pointerId);
+            console.log('04/07 mousedown', e.clientX, e.clientY, bbox.top, bbox.left);
+            this.setState({
+                position: {
+                    ...position,
+                    active: true,
+                    offset: { x, y },
+                },
+            });
+        }
     }
 
     handlePointerMove = (e) => {
         const { position } = this.state;
-        const { updatePoint } = this.props;
+        const { updatePoint, geometry } = this.props;
 
         const el = e.target;
         const bbox = e.target.getBoundingClientRect();
         const x = e.clientX - bbox.left;
         const y = e.clientY - bbox.top;
 
+        console.log('04/07, handlePointerMove', el);
+
+
         el.setPointerCapture(e.pointerId);
+        const geometryScale = (geometry) ? geometry.scale : 1;
 
         if (position.active) {
-            const nx = position.x - (position.offset.x - x);
-            const ny = position.y - (position.offset.y - y);
+            const nx = position.x - (position.offset.x - x) / geometryScale;
+            const ny = position.y - (position.offset.y - y) / geometryScale;
             const px = position.x;
             const py = position.y;
             this.setState({
@@ -94,7 +100,6 @@ class Circle extends Component {
 
     render() {
         const { position } = this.state;
-        console.log('re-render Circle', this.props);
         return (
             <circle
                 {...this.props}
@@ -142,7 +147,6 @@ class Rect extends Component {
     }
 
     render() {
-        // console.log('re-render Rect', this.props);
         const { position } = this.state;
         return (
             <rect
@@ -163,6 +167,7 @@ class Rect extends Component {
 export class AnnoShape extends Component {
     constructor(props) {
         super(props);
+        this.types = ['rectangle', 'polygon', 'polyline', 'points'];
         let box = {};
         if (props.shapetype === 'rectangle') {
             const initPoints = this.pointsStringToArray(props.points);
@@ -174,11 +179,39 @@ export class AnnoShape extends Component {
             };
         }
         this.state = {
+            ...props,
             box,
-            points: props.points,
-            dragging: false,
+            // objID: props.objID,
+            // points: props.points,
+            // selected: false,
         };
-        this.types = ['rectangle', 'polygon', 'polyline', 'points'];
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+
+        if (nextProps.objID !== prevState.objID) {
+            let box = {};
+            if (nextProps.shapetype === 'rectangle') {
+                const initPoints = nextProps.points.split(' ').map((item) => {
+                    const pos = item.split(','); return { x: +pos[0], y: +pos[1] };
+                });
+
+                box = {
+                    tl: { x: initPoints[0].x, y: initPoints[0].y },
+                    bl: { x: initPoints[0].x, y: initPoints[1].y },
+                    br: { x: initPoints[1].x, y: initPoints[1].y },
+                    tr: { x: initPoints[1].x, y: initPoints[0].y },
+                };
+            }
+            return {
+                ...prevState,
+                ...nextProps,
+                box,
+            };
+        }
+        return null;
+
+
     }
 
     pointsStringToArray = (points) => {
@@ -189,7 +222,8 @@ export class AnnoShape extends Component {
     }
 
     testOnClick = (e) => {
-        // console.log('handleonClick', e);
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleonDrage = (e) => {
@@ -257,7 +291,7 @@ export class AnnoShape extends Component {
     updatePolyPoint = (x, y, pid) => {
         const { shapeIndex, shapetype, updateObjPoint } = this.props;
         const { points } = this.state;
-        // console.log('updatePolyPoint', pid, x, y);
+        console.log('04/07, updatePolyPoint', pid, x, y);
         const pointsArray = this.pointsStringToArray(points);
         let points_str = '';
 
@@ -269,9 +303,8 @@ export class AnnoShape extends Component {
     }
 
     render() {
-        const { shapetype, shapeIndex, selectedObject, objID } = this.props;
-        const { box, points, dragging } = this.state;
-        // console.log('re-render AnnoShape:', shapeIndex);
+        const { shapetype, shapeIndex, selectedObject, objID, selected, geometry } = this.props;
+        const { box, points } = this.state;
 
         const shapeBox = {
             xtl: Number.MAX_SAFE_INTEGER,
@@ -295,6 +328,7 @@ export class AnnoShape extends Component {
                 content = (
                     <>
                         <Rect
+                            onClick={(e) => { console.log('rect on click', e.target); }}
                             style={{
                                 stroke: '#edba80', strokeWidth: 2, strokeOpacity: 1, fill: '#edba80', fillOpacity: 0.2,
                             }}
@@ -303,24 +337,27 @@ export class AnnoShape extends Component {
                             width={shapeBox.xbr - shapeBox.xtl}
                             height={shapeBox.ybr - shapeBox.ytl}
                         />
-                        <g
-                            style={{
-                                stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#edba80', fillOpacity: 1,
-                            }}
-                        >
-                            {
-                                Object.keys(box).map((key) => (
-                                    <Circle
-                                        onClick={(e) => { this.testOnClick(e); }}
-                                        // updatePoint={this.updateRectPoint}
-                                        updatePoint={(x, y) => { this.updateRectPoint(x, y, key); }}
-                                        cx={box[key].x}
-                                        cy={box[key].y}
-                                        r="4"
-                                    />
-                                ))
-                            }
-                        </g>
+                        {(selected) ? (
+                            <g
+                                style={{
+                                    stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#edba80', fillOpacity: 1,
+                                }}
+                            >
+                                {
+                                    Object.keys(box).map((key) => (
+                                        <Circle
+                                            geometry={geometry}
+                                            onClick={(e) => { this.testOnClick(e); }}
+                                            // updatePoint={this.updateRectPoint}
+                                            updatePoint={(x, y) => { this.updateRectPoint(x, y, key); }}
+                                            cx={box[key].x}
+                                            cy={box[key].y}
+                                            r="4"
+                                        />
+                                    ))
+                                }
+                            </g>
+                        ) : ''}
                     </>
                 );
                 break;
@@ -329,24 +366,28 @@ export class AnnoShape extends Component {
                     <>
                         <polygon
                             points={points}
-                            fill="#ffcc00"
-                            stroke="#ffcc00"
-                            strokeWidth="2"
-                            fillOpacity="0"
-                            strokeOpacity="1"
-                            zorder="9999999"
+                            style={{
+                                stroke: '#ffcc00', strokeWidth: 2, strokeOpacity: 1, fill: '#ffcc00', fillOpacity: 0.2,
+                            }}
                         />
-                        <g fill="white" stroke="green">
-                            {pointsArray.map((pt, pid) => (
-                                <Circle
-                                    onClick={(e) => { this.testOnClick(e); }}
-                                    updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
-                                    cx={pt.x}
-                                    cy={pt.y}
-                                    r="4"
-                                />
-                            ))}
-                        </g>
+                        {(selected) ? (
+                            <g
+                                style={{
+                                    stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#ffcc00', fillOpacity: 1,
+                                }}
+                            >
+                                {pointsArray.map((pt, pid) => (
+                                    <Circle
+                                        geometry={geometry}
+                                        onClick={(e) => { this.testOnClick(e); }}
+                                        updatePoint={(x, y) => { console.log(x, y, '04/07'); this.updatePolyPoint(x, y, pid); }}
+                                        cx={pt.x}
+                                        cy={pt.y}
+                                        r="4"
+                                    />
+                                ))}
+                            </g>
+                        ) : ''}
                     </>
                 );
                 break;
@@ -355,16 +396,20 @@ export class AnnoShape extends Component {
                     <>
                         <polyline
                             points={points}
-                            fill="#ffcc00"
-                            stroke="#ffcc00"
+                            fill="#3ddb8a"
+                            stroke="#3ddb8a"
                             strokeWidth="2"
                             fillOpacity="0"
                             strokeOpacity="1"
-                            zorder="9999999"
                         />
-                        <g fill="white" stroke="green">
+                        <g
+                            style={{
+                                stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#3ddb8a', fillOpacity: 1,
+                            }}
+                        >
                             {pointsArray.map((pt, pid) => (
                                 <Circle
+                                    geometry={geometry}
                                     onClick={(e) => { this.testOnClick(e); }}
                                     updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
                                     cx={pt.x}
@@ -379,9 +424,14 @@ export class AnnoShape extends Component {
             case 'points':
                 content = (
                     <>
-                        <g fill="white" stroke="green">
+                        <g
+                            style={{
+                                stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#957de3', fillOpacity: 1,
+                            }}
+                        >
                             {pointsArray.map((pt, pid) => (
                                 <Circle
+                                    geometry={geometry}
                                     onClick={(e) => { this.testOnClick(e); }}
                                     updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
                                     cx={pt.x}

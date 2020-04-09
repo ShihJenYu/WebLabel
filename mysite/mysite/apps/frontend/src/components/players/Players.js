@@ -57,7 +57,7 @@ export class Players extends Component {
                 newFrame = currentFrame + val;
             }
             if (newFrame !== currentFrame) {
-                console.log(tag, +tag);
+                // console.log(tag, +tag);
                 setCurrentFrame(newFrame);
                 // this.setState({ currentFrame: newFrame });
             }
@@ -87,7 +87,7 @@ export class Players extends Component {
     }
 
     render() {
-        console.log('render palyer');
+        // console.log('render palyer');
         const { frameStatus, currentFrame } = this.props;
         const { isplaying } = this.state;
 

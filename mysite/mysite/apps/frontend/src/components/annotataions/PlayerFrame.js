@@ -4,13 +4,63 @@ import PropTypes from 'prop-types';
 
 import AnnoShape from './AnnoShape';
 
+import { selectObject } from '../../actions/annotations';
+
+
+const pointInPolygon = require('robust-point-in-polygon');
+
+const distanceOfPoints = (points, mousePos) => {
+    let minDistance = Number.MAX_SAFE_INTEGER;
+
+    points.forEach((point) => {
+        const a_distance = Math.sqrt((point[0] - mousePos[0]) ** 2 + (point[1] - mousePos[1]) ** 2);
+        if (a_distance < minDistance) {
+            minDistance = a_distance;
+        }
+    });
+    return minDistance;
+};
+
+const distanceOfPolygon = (points, mousePos) => {
+    let minDistance = Number.MAX_SAFE_INTEGER;
+
+    points.forEach((point, i, points) => {
+        const p1 = { x: points[i][0], y: points[i][1] };
+        const p2 = (i + 1 >= points.length)
+            ? { x: points[0][0], y: points[0][1] }
+            : { x: points[i + 1][0], y: points[i + 1][1] };
+
+        // perpendicular from point to straight length
+        const a_distance = (Math.abs((p2.y - p1.y) * mousePos[0]
+            - (p2.x - p1.x) * mousePos[1] + p2.x * p1.y - p2.y * p1.x))
+            / Math.sqrt((p2.y - p1.y) ** 2 + (p2.x - p1.x) ** 2);
+
+        // check if perpendicular belongs to the straight segment
+        const a = (p1.x - mousePos[0]) ** 2 + (p1.y - mousePos[1]) ** 2;
+        const b = (p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2;
+        const c = (p2.x - mousePos[0]) ** 2 + (p2.y - mousePos[1]) ** 2;
+        if (a_distance < minDistance && (a + b - c) >= 0 && (c + b - a) >= 0) {
+            minDistance = a_distance;
+        }
+    });
+    return minDistance;
+};
+
 export class PlayerFrame extends Component {
     constructor(props) {
         super(props);
         this.state = {
             action: 'none', // none , drawing
+            moving: false,
             shapeType: '',
             points: [],
+            geometry: {
+                scale: 1,
+                left: 0,
+                top: 0,
+                width: 0,
+                height: 0,
+            },
         };
     }
 
@@ -38,6 +88,35 @@ export class PlayerFrame extends Component {
         return pos;
     }
 
+
+    scale = (x, y, value) => {
+        const { action, points, geometry } = this.state;
+
+        const MAX_PLAYER_SCALE = 10;
+        const MIN_PLAYER_SCALE = 0.1;
+
+        const currentCenter = {
+            x: (x - geometry.left) / geometry.scale,
+            y: (y - geometry.top) / geometry.scale,
+        };
+
+        geometry.scale = value > 0 ? (geometry.scale * 6) / 5 : (geometry.scale * 5) / 6;
+        geometry.scale = Math.min(geometry.scale, MAX_PLAYER_SCALE);
+        geometry.scale = Math.max(geometry.scale, MIN_PLAYER_SCALE);
+
+        const newCenter = {
+            x: (x - geometry.left) / geometry.scale,
+            y: (y - geometry.top) / geometry.scale,
+        };
+
+        geometry.left += (newCenter.x - currentCenter.x) * geometry.scale;
+        geometry.top += (newCenter.y - currentCenter.y) * geometry.scale;
+
+        this.setState({ geometry });
+    }
+
+
+
     pointsArrayToString = (points) => {
         const points_str = points.map((item) => (`${item.x},${item.y}`)).join(' ');
         return points_str;
@@ -46,25 +125,73 @@ export class PlayerFrame extends Component {
     testOnClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const { createNewObj } = this.props;
+        const { createNewObj, annotations, currentFrame, selectObject, selectedObject } = this.props;
         const { action, points, shapeType } = this.state;
+        const pt = this.translateSVGPos(this.frameContent, e.clientX, e.clientY);
+
         if (action === 'drawing') {
             // console.log('testOnClick', e.target);
             // console.log('testOnClick', e.clientX, e.clientY);
-            const pt = this.translateSVGPos(this.frameContent, e.clientX, e.clientY);
             // console.log('testOnClick', pt);
             // if (points.length > 1) {
             //     const last = points.pop();
             //     console.log('testOnClick', last);
             // }
-            if (shapeType === 'rectangle' && points.length > 0) {
-                const mousePt = points.pop();
-                const points_str = this.pointsArrayToString([...points, pt]);
-                this.setState({ action: 'none', points: [] });
-                createNewObj(points_str, shapeType); // shapetype
+            if (shapeType === 'rectangle') {
+                if (points.length > 0) {
+                    const mousePt = points.pop();
+                    const points_str = this.pointsArrayToString([...points, pt]);
+                    this.setState({ action: 'none', points: [] });
+                    createNewObj(points_str, shapeType); // shapetype
+                } else {
+                    this.setState({ points: [pt, pt] });
+                }
             } else {
-                this.setState({ points: [...points, pt] });
-
+                if (points.length > 0) {
+                    const mousePt = points.pop();
+                }
+                this.setState({ points: [...points, pt, pt] });
+            }
+        } else {
+            console.log('onPlayerFrame onClick, will select closer object');
+            console.log('mouse pos is:', pt);
+            const closedShape = {
+                minDistance: Number.MAX_SAFE_INTEGER,
+                id: undefined,
+            };
+            annotations.forEach((obj, index) => {
+                if (obj.frame === currentFrame) {
+                    const shape_pts = [];
+                    (obj.points.split(' ')).forEach((pt_str) => {
+                        const tmp_pt = pt_str.split(',');
+                        shape_pts.push(tmp_pt.map((tmp) => +tmp));
+                    });
+                    if (obj.shapetype === 'rectangle') {
+                        shape_pts.splice(1, 0, [shape_pts[0][0], shape_pts[1][1]]);
+                        shape_pts.push([shape_pts[2][0], shape_pts[0][1]]);
+                    }
+                    const inShape = pointInPolygon(shape_pts, [pt.x, pt.y]);
+                    // -1 if point is contained inside loop
+                    // 0 if point is on the boundary of loop
+                    // 1 if point is outside loop
+                    if (inShape !== 1) {
+                        // console.log(obj.id, inShape);
+                        let a_distance = Number.MAX_SAFE_INTEGER;
+                        if (obj.shapetype === 'points') {
+                            a_distance = distanceOfPoints(shape_pts, [pt.x, pt.y]);
+                        } else {
+                            a_distance = distanceOfPolygon(shape_pts, [pt.x, pt.y]);
+                        }
+                        if (a_distance <= closedShape.minDistance) {
+                            closedShape.minDistance = a_distance;
+                            closedShape.id = obj.id;
+                        }
+                    }
+                }
+            });
+            if (closedShape.id !== selectedObject.id) {
+                selectObject(closedShape.id);
+                console.log('selected id :', closedShape.id);
             }
         }
     }
@@ -93,17 +220,31 @@ export class PlayerFrame extends Component {
     handleMouseMove = (e) => {
         const { action, points } = this.state;
         if (action === 'drawing') {
-            if (points.length >= 1) {
+            if (points.length >= 2) {
                 // console.log('handleMouseMove', e.target);
                 // console.log('handleMouseMove', e.clientX, e.clientY);
                 const pt = this.translateSVGPos(this.frameContent, e.clientX, e.clientY);
                 // console.log('handleMouseMove', pt);
-                if (points.length > 1) {
-                    const mousePt = points.pop();
-                }
+                // if (points.length >= 2) {
+
+                // }
+                const mousePt = points.pop();
                 // console.log('handleMouseMove', last);
                 this.setState({ points: [...points, pt] });
             }
+        }
+    }
+
+    handleMouseWheel = (e) => {
+        const { action, points } = this.state;
+        // 34px is top header
+        const x = e.nativeEvent.pageX; // - this._leftOffset;
+        const y = e.nativeEvent.pageY - 34;
+
+        if (e.nativeEvent.deltaY < 0) {
+            this.scale(x, y, 1);
+        } else {
+            this.scale(x, y, -1);
         }
     }
 
@@ -136,15 +277,13 @@ export class PlayerFrame extends Component {
                         createNewObj(points_str, shapeType); // shapetype
                     }
                 }
-
-
-
             }
         }
     }
 
     drawShapes = () => {
         const { currentFrame, annotations, selectedObject } = this.props;
+        const { geometry } = this.state;
         // console.log(currentFrame, annotations);
 
         const shapes = [];
@@ -167,10 +306,11 @@ export class PlayerFrame extends Component {
                 }
             }
         });
-        console.log('selectedShape', selectedShape);
+        // console.log('selectedShape', selectedShape);
         if (selectedShape.index !== null) {
             shapes.push(
                 <AnnoShape
+                    geometry={geometry}
                     objID={selectedShape.obj.id}
                     points={selectedShape.obj.points}
                     shapeIndex={selectedShape.index}
@@ -189,22 +329,83 @@ export class PlayerFrame extends Component {
         }
     }
 
+    handlePointerDown = (e) => {
+        const { moving, lastClickX, lastClickY } = this.state;
+        // left: 0, middle: 1, right: 2
+        if (e.button === 1 && e.altKey) {
+            console.log('04/08 PointerDown', e.clientX, e.clientY);
+            this.setState({
+                moving: true,
+                lastClickX: e.clientX,
+                lastClickY: e.clientY,
+            });
+        }
+    }
+
+    handlePointerUp = (e) => {
+        const { moving, lastClickX, lastClickY } = this.state;
+        this.setState({
+            moving: false,
+        });
+    }
+
+    handlePointerMove = (e) => {
+        const { moving, lastClickX, lastClickY } = this.state;
+        // left: 0, middle: 1, right: 2
+        if (moving) {
+            const topOffset = e.clientY - lastClickY;
+            const leftOffset = e.clientX - lastClickX;
+
+            console.log('04/07 PointerMov,', e.clientX, e.clientY);
+            this.move(e.clientX, e.clientY, topOffset, leftOffset);
+        }
+    }
+
+    handleDoubleClick = (e) => {
+        this.fit();
+    }
+
+    move = (lastClickX, lastClickY, topOffset, leftOffset) => {
+        const { geometry } = this.state;
+        geometry.top += topOffset;
+        geometry.left += leftOffset;
+        this.setState({
+            geometry, lastClickX, lastClickY,
+        });
+    }
+
+    fit = () => {
+        const { geometry } = this.state;
+        const { currentImage } = this.props;
+
+        const bg_img_width = (currentImage) ? currentImage.width : 1;
+        const bg_img_height = (currentImage) ? currentImage.height : 1;
+        geometry.width = this.playerFrameCell.clientWidth;
+        geometry.height = this.playerFrameCell.clientHeight;
+        geometry.scale = Math.min(geometry.width / bg_img_width, geometry.height / bg_img_height);
+        geometry.left = (geometry.width - bg_img_width * geometry.scale) / 2;
+        geometry.top = (geometry.height - bg_img_height * geometry.scale) / 2;
+        this.setState({ geometry });
+    }
+
     render() {
         // console.log('render palyerFrame');
-        const { points, shapeType } = this.state;
-        const { currentImage, geometry } = this.props;
+        const { points, shapeType, geometry } = this.state;
+        const { currentImage } = this.props;
 
         const bg_img_src = (currentImage) ? currentImage.src : '';
         const bg_img_width = (currentImage) ? currentImage.width : 1;
         const bg_img_height = (currentImage) ? currentImage.height : 1;
+        // console.log('04/07,', geometry);
         // if (geometry && this.playerFrameCell) {
-        if (geometry) {
+        if (geometry && this.playerFrameCell && currentImage && (geometry.width !== this.playerFrameCell.clientWidth || geometry.height !== this.playerFrameCell.clientHeight)) {
             geometry.width = this.playerFrameCell.clientWidth;
             geometry.height = this.playerFrameCell.clientHeight;
             geometry.scale = Math.min(geometry.width / bg_img_width, geometry.height / bg_img_height);
             geometry.left = (geometry.width - bg_img_width * geometry.scale) / 2;
             geometry.top = (geometry.height - bg_img_height * geometry.scale) / 2;
             // console.log('geometry.width', geometry.width, geometry.height);
+            this.setState({ geometry });
         }
 
         const geometryScale = (geometry) ? geometry.scale : 1;
@@ -329,19 +530,23 @@ export class PlayerFrame extends Component {
                 ref={(cell) => { this.playerFrameCell = cell; }}
                 id="playerFrame"
                 tabIndex="-1"
-                style={{ position: 'relative', height: '100%', width: '100%' }}
-                onKeyPress={(e) => { this.handleKeyPress(e); }}
-                onKeyDown={(e) => { this.handleKeyDown(e); }}
-                onMouseMove={(e) => { this.handleMouseMove(e); }}
+                style={{ position: 'relative', height: '100%', width: '100%', overflow: 'hidden' }}
+                onKeyPress={this.handleKeyPress}
+                onKeyDown={this.handleKeyDown}
+                onMouseMove={this.handleMouseMove}
+                onWheel={this.handleMouseWheel}
+                onDoubleClick={this.handleDoubleClick}
             >
 
                 <svg
                     id="frameContent"
                     ref={(cell) => { this.frameContent = cell; }}
-                    onClick={(e) => { this.testOnClick(e); }}
-                    onContextMenu={(e) => { this.testOnContextMenu(e); }}
-
-
+                    onClick={this.testOnClick}
+                    onContextMenu={this.testOnContextMenu}
+                    onPointerDown={this.handlePointerDown}
+                    onPointerUp={this.handlePointerUp}
+                    onPointerMove={this.handlePointerMove}
+                    onDoubleClick={(e) => { e.stopPropagation(); }}
                     style={{
                         position: 'absolute',
                         zIndex: 1,
@@ -360,6 +565,7 @@ export class PlayerFrame extends Component {
                 </svg>
                 <svg
                     id="frameBackground"
+                    onDoubleClick={(e) => { e.stopPropagation(); }}
                     style={{
                         position: 'absolute',
                         zIndex: 0,
@@ -381,7 +587,7 @@ export class PlayerFrame extends Component {
 
 PlayerFrame.propTypes = {
     currentImage: PropTypes.any.isRequired,
-    geometry: PropTypes.any.isRequired,
+    // geometry: PropTypes.any.isRequired,
     shapeType: PropTypes.string.isRequired,
     createNewObj: PropTypes.func.isRequired,
     annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -396,4 +602,4 @@ const mapStateToProps = (state) => ({
 
 });
 
-export default connect(mapStateToProps, {})(PlayerFrame);
+export default connect(mapStateToProps, { selectObject })(PlayerFrame);

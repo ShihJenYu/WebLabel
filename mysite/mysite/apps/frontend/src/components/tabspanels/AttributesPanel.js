@@ -20,7 +20,7 @@ export class AttributesPanel extends PureComponent {
 
     componentDidUpdate() {
         const { accordion1BodyH, setAccordion1BodyH } = this.props;
-        console.log('didupdate,', this);
+        // console.log('didupdate,', this);
         this.divElement.parentElement.style.display = 'block';
         if (this.divElement.clientHeight !== accordion1BodyH) {
             setAccordion1BodyH(this.divElement.clientHeight);
@@ -82,7 +82,7 @@ export class AttributesPanel extends PureComponent {
 
     render() {
         const { labels, selectedObject } = this.props;
-        console.log('labels, selectedObject', labels, selectedObject);
+        // console.log('labels, selectedObject', labels, selectedObject);
         // TODO selectedObject will change by object panel
 
         // selectedObject decied content attribute
