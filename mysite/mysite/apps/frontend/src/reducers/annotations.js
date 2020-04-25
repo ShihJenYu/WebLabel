@@ -2,6 +2,7 @@ import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
     SET_CURRENTFRAME, GET_INITDATA, UPDATE_OBJPOINT,
+    CREATE_GROUP, DELETE_GROUP, SELECTE_GROUP, ADD_ITEM_TO_GROUP,
 } from '../actions/types';
 
 const initialStata = {
@@ -14,6 +15,11 @@ const initialStata = {
     accordion1BodyH: null,
     frameStatus: [{}],
     currentFrame: 0,
+
+    hoverObjectID: -1,
+    groups: {}, //frame: [],
+    selectedGroup: {}, // id, name,  [objIDs]
+
     initialed: false,
 };
 
@@ -130,6 +136,8 @@ export default function (state = initialStata, action) {
             return {
                 ...state,
                 currentFrame: action.payload,
+                selectedObject: (state.currentFrame === action.payload) ? state.selectedObject : {},
+                selectedGroup: (state.currentFrame === action.payload) ? state.selectedGroup : {},
             };
         case UPDATE_OBJPOINT: {
             const { annotations } = state;
@@ -140,6 +148,50 @@ export default function (state = initialStata, action) {
             return {
                 ...state,
                 annotations,
+            };
+        }
+        case CREATE_GROUP: {
+            const { groups } = state;
+            const groupList = groups[state.currentFrame] || [];
+            return {
+                ...state,
+                groups: { ...groups, [state.currentFrame]: [...groupList, action.payload.group] },
+                selectedGroup: action.payload.group,
+            };
+        }
+        case DELETE_GROUP: {
+            return {
+                ...state,
+                groups: {
+                    ...state.groups,
+                    [state.currentFrame]:
+                        (state.groups[[state.currentFrame]]).filter((object) => object.id !== action.payload.id),
+                },
+                selectedGroup: (state.selectedGroup.id === action.payload.id)
+                    ? {} : state.selectedGroup,
+            };
+        }
+        case SELECTE_GROUP: {
+            const select = (state.groups[state.currentFrame]).find((object) => object.id === action.payload.id);
+            return {
+                ...state,
+                selectedGroup: (select) || {},
+            };
+        }
+        case ADD_ITEM_TO_GROUP: {
+            const newGroup = {
+                ...state.selectedGroup,
+                objIDs: [...(state.selectedGroup.objIDs), action.payload.id],
+            };
+            return {
+                ...state,
+                groups: {
+                    ...state.groups,
+                    [state.currentFrame]:
+                        (state.groups[state.currentFrame]).map((group) => (
+                            (group.id !== state.selectedGroup.id) ? group : newGroup)),
+                },
+                selectedGroup: newGroup,
             };
         }
         default:

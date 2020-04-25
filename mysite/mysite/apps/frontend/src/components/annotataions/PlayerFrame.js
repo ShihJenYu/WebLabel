@@ -6,22 +6,29 @@ import AnnoShape from './AnnoShape';
 
 import { selectObject } from '../../actions/annotations';
 
+// ***************************************
+// -1 if point is contained inside loop  *
+// 0 if point is on the boundary of loop *
+// 1 if point is outside loop ************
+// ***************************************
+const pointInClosedShape = require('robust-point-in-polygon');
 
-const pointInPolygon = require('robust-point-in-polygon');
-
-const distanceOfPoints = (points, mousePos) => {
-    let minDistance = Number.MAX_SAFE_INTEGER;
-
-    points.forEach((point) => {
-        const a_distance = Math.sqrt((point[0] - mousePos[0]) ** 2 + (point[1] - mousePos[1]) ** 2);
-        if (a_distance < minDistance) {
-            minDistance = a_distance;
-        }
-    });
-    return minDistance;
+// pints circle r="4"
+const pointInPoints = (points, mousePos) => {
+    const r = 4;
+    const r2 = r ** 2;
+    let pos = 1;
+    for (let i = 0; i < points.length; i += 1) {
+        const c = { x: points[i][0], y: points[i][1] };
+        const d2 = (mousePos[0] - c.x) ** 2 + (mousePos[1] - c.y) ** 2;
+        if (d2 > r2) pos = 1;
+        else if (d2 === r2) return 0;
+        else return -1;
+    }
+    return pos;
 };
 
-const distanceOfPolygon = (points, mousePos) => {
+const distanceOfClosedShape = (points, mousePos) => {
     let minDistance = Number.MAX_SAFE_INTEGER;
 
     points.forEach((point, i, points) => {
@@ -45,6 +52,42 @@ const distanceOfPolygon = (points, mousePos) => {
     });
     return minDistance;
 };
+
+const distanceOfPoints = (points, mousePos) => {
+    let minDistance = Number.MAX_SAFE_INTEGER;
+
+    points.forEach((point) => {
+        const a_distance = Math.sqrt((point[0] - mousePos[0]) ** 2 + (point[1] - mousePos[1]) ** 2);
+        if (a_distance < minDistance) {
+            minDistance = a_distance;
+        }
+    });
+    return minDistance;
+};
+
+const distanceOfPolyline = (points, mousePos) => {
+    let minDistance = Number.MAX_SAFE_INTEGER;
+
+    for (let i = 0; i < points.length - 1; i += 1) {
+        const p1 = { x: points[i][0], y: points[i][1] };
+        const p2 = { x: points[i + 1][0], y: points[i + 1][1] };
+
+        // perpendicular from point to straight length
+        const a_distance = (Math.abs((p2.y - p1.y) * mousePos[0]
+            - (p2.x - p1.x) * mousePos[1] + p2.x * p1.y - p2.y * p1.x))
+            / Math.sqrt((p2.y - p1.y) ** 2 + (p2.x - p1.x) ** 2);
+
+        // check if perpendicular belongs to the straight segment
+        const a = (p1.x - mousePos[0]) ** 2 + (p1.y - mousePos[1]) ** 2;
+        const b = (p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2;
+        const c = (p2.x - mousePos[0]) ** 2 + (p2.y - mousePos[1]) ** 2;
+        if (a_distance < minDistance && (a + b - c) >= 0 && (c + b - a) >= 0) {
+            minDistance = a_distance;
+        }
+    }
+    return minDistance;
+};
+
 
 export class PlayerFrame extends Component {
     constructor(props) {
@@ -159,6 +202,12 @@ export class PlayerFrame extends Component {
                 minDistance: Number.MAX_SAFE_INTEGER,
                 id: undefined,
             };
+            const openShape = {
+                minDistance: 4,
+                id: undefined,
+            };
+            let finalSelectedShape;
+
             annotations.forEach((obj, index) => {
                 if (obj.frame === currentFrame) {
                     const shape_pts = [];
@@ -170,28 +219,65 @@ export class PlayerFrame extends Component {
                         shape_pts.splice(1, 0, [shape_pts[0][0], shape_pts[1][1]]);
                         shape_pts.push([shape_pts[2][0], shape_pts[0][1]]);
                     }
-                    const inShape = pointInPolygon(shape_pts, [pt.x, pt.y]);
-                    // -1 if point is contained inside loop
-                    // 0 if point is on the boundary of loop
-                    // 1 if point is outside loop
-                    if (inShape !== 1) {
-                        // console.log(obj.id, inShape);
-                        let a_distance = Number.MAX_SAFE_INTEGER;
-                        if (obj.shapetype === 'points') {
-                            a_distance = distanceOfPoints(shape_pts, [pt.x, pt.y]);
-                        } else {
-                            a_distance = distanceOfPolygon(shape_pts, [pt.x, pt.y]);
+
+                    // ***************************************
+                    // -1 if point is contained inside loop  *
+                    // 0 if point is on the boundary of loop *
+                    // 1 if point is outside loop ************
+                    // ***************************************
+                    let inShape = 1;
+                    let a_distance = Number.MAX_SAFE_INTEGER;
+                    switch (obj.shapetype) {
+                        case 'polygon': case 'rectangle': {
+                            inShape = pointInClosedShape(shape_pts, [pt.x, pt.y]);
+                            if (inShape !== 1) {
+                                a_distance = distanceOfClosedShape(shape_pts, [pt.x, pt.y]);
+                            }
+                            if (a_distance < closedShape.minDistance) {
+                                closedShape.minDistance = a_distance;
+                                closedShape.id = obj.id;
+                            }
+                            break;
                         }
-                        if (a_distance <= closedShape.minDistance) {
-                            closedShape.minDistance = a_distance;
-                            closedShape.id = obj.id;
+                        case 'polyline': {
+                            // inShape = pointInPolyline(shape_pts, [pt.x, pt.y]);
+                            // if (inShape !== 1) {
+                            //     // a_distance = 0;
+                            // }
+                            a_distance = distanceOfPolyline(shape_pts, [pt.x, pt.y]);
+                            if (a_distance < openShape.minDistance) {
+                                openShape.minDistance = a_distance;
+                                openShape.id = obj.id;
+                            }
+                            break;
                         }
+                        case 'points': {
+                            inShape = pointInPoints(shape_pts, [pt.x, pt.y]);
+                            if (inShape !== 1) {
+                                a_distance = distanceOfPoints(shape_pts, [pt.x, pt.y]);
+                            }
+                            if (a_distance < openShape.minDistance) {
+                                openShape.minDistance = a_distance;
+                                openShape.id = obj.id;
+                            }
+                            break;
+                        }
+                        default:
+                            break;
                     }
                 }
             });
-            if (closedShape.id !== selectedObject.id) {
-                selectObject(closedShape.id);
-                console.log('selected id :', closedShape.id);
+            if (closedShape.id) {
+                finalSelectedShape = closedShape.id;
+            }
+            if (openShape.id) {
+                finalSelectedShape = openShape.id;
+            }
+            if (finalSelectedShape !== selectedObject.id) {
+                selectObject(finalSelectedShape);
+                console.log('selected id :', finalSelectedShape);
+            } else {
+                console.log('no change selected id :', finalSelectedShape);
             }
         }
     }

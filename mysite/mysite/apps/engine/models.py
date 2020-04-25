@@ -180,3 +180,11 @@ class LabeledShape(Annotation, Shape):
 # include all shape attr val
 class LabeledShapeAttributeVal(AttributeVal):
     shape = models.ForeignKey(LabeledShape, on_delete=models.CASCADE)
+
+
+# class ShapeGroup:
+#     name = models.CharField(max_length=256)
+#     parent = models.BigIntegerField(default=-1)
+#     order = models.IntegerField(default=0)
+#     task = models.ForeignKey(Task, on_delete=models.CASCADE)
+#     frame = models.PositiveIntegerField()

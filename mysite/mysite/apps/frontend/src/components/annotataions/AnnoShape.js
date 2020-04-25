@@ -402,44 +402,66 @@ export class AnnoShape extends Component {
                             fillOpacity="0"
                             strokeOpacity="1"
                         />
-                        <g
-                            style={{
-                                stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#3ddb8a', fillOpacity: 1,
-                            }}
-                        >
-                            {pointsArray.map((pt, pid) => (
-                                <Circle
-                                    geometry={geometry}
-                                    onClick={(e) => { this.testOnClick(e); }}
-                                    updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
-                                    cx={pt.x}
-                                    cy={pt.y}
-                                    r="4"
-                                />
-                            ))}
-                        </g>
+                        {(selected) ? (
+                            <g
+                                style={{
+                                    stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#3ddb8a', fillOpacity: 1,
+                                }}
+                            >
+                                {pointsArray.map((pt, pid) => (
+                                    <Circle
+                                        geometry={geometry}
+                                        onClick={(e) => { this.testOnClick(e); }}
+                                        updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
+                                        cx={pt.x}
+                                        cy={pt.y}
+                                        r="4"
+                                    />
+                                ))}
+                            </g>
+                        ) : ''}
                     </>
                 );
                 break;
             case 'points':
                 content = (
                     <>
-                        <g
-                            style={{
-                                stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#957de3', fillOpacity: 1,
-                            }}
-                        >
-                            {pointsArray.map((pt, pid) => (
-                                <Circle
-                                    geometry={geometry}
-                                    onClick={(e) => { this.testOnClick(e); }}
-                                    updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
-                                    cx={pt.x}
-                                    cy={pt.y}
-                                    r="4"
-                                />
-                            ))}
-                        </g>
+                        {(selected) ? (
+                            <g
+                                style={{
+                                    stroke: 'black', strokeWidth: 2, strokeOpacity: 1, fill: '#957de3', fillOpacity: 1,
+                                }}
+                            >
+                                {pointsArray.map((pt, pid) => (
+                                    <Circle
+                                        geometry={geometry}
+                                        onClick={(e) => { this.testOnClick(e); }}
+                                        updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
+                                        cx={pt.x}
+                                        cy={pt.y}
+                                        r="4"
+                                    />
+                                ))}
+                            </g>
+                        )
+                            : (
+                                <g
+                                    style={{
+                                        stroke: 'black', strokeWidth: 1, strokeOpacity: 1, fill: '#957de3', fillOpacity: 1,
+                                    }}
+                                >
+                                    {pointsArray.map((pt, pid) => (
+                                        <circle
+                                            geometry={geometry}
+                                            // onClick={(e) => { this.testOnClick(e); }}
+                                            // updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
+                                            cx={pt.x}
+                                            cy={pt.y}
+                                            r="4"
+                                        />
+                                    ))}
+                                </g>
+                            )}
                     </>
                 );
                 break;

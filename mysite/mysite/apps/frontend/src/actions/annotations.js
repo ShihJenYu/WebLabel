@@ -4,6 +4,7 @@ import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
     SET_CURRENTFRAME, GET_INITDATA, UPDATE_OBJPOINT,
+    CREATE_GROUP, DELETE_GROUP, SELECTE_GROUP, ADD_ITEM_TO_GROUP,
 } from './types';
 
 // GET INITDATA
@@ -175,6 +176,46 @@ export const updateObjPoint = (shapeIndex, points) => (dispatch) => {
         type: UPDATE_OBJPOINT,
         payload: {
             shapeIndex, points,
+        },
+    });
+};
+
+// CREATE_GROUP
+export const createGroup = (id, name) => (dispatch) => {
+    dispatch({
+        type: CREATE_GROUP,
+        payload: {
+            group: { id, name, objIDs: [] },
+        },
+    });
+};
+
+// DELETE_GROUP
+export const deleteGroup = (id) => (dispatch) => {
+    dispatch({
+        type: DELETE_GROUP,
+        payload: {
+            id,
+        },
+    });
+};
+
+// SELECTE_GROUP
+export const selecteGroup = (id) => (dispatch) => {
+    dispatch({
+        type: SELECTE_GROUP,
+        payload: {
+            id,
+        },
+    });
+};
+
+// ADD_ITEM_TO_GROUP
+export const addItem2Group = (id) => (dispatch) => {
+    dispatch({
+        type: ADD_ITEM_TO_GROUP,
+        payload: {
+            id,
         },
     });
 };
