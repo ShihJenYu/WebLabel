@@ -2,7 +2,8 @@ import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
     SET_CURRENTFRAME, GET_INITDATA, UPDATE_OBJPOINT,
-    CREATE_GROUP, DELETE_GROUP, SELECTE_GROUP, ADD_ITEM_TO_GROUP,
+    CREATE_GROUP, DELETE_GROUP, SELECTE_GROUP, ADD_ITEM_TO_GROUP, SORTED_ITEM_TO_GROUP, RENAME_GROUP,
+    HOVER_OBJECT,
 } from '../actions/types';
 
 const initialStata = {
@@ -16,7 +17,7 @@ const initialStata = {
     frameStatus: [{}],
     currentFrame: 0,
 
-    hoverObjectID: -1,
+    hoverObjectID: '',
     groups: {}, //frame: [],
     selectedGroup: {}, // id, name,  [objIDs]
 
@@ -178,6 +179,17 @@ export default function (state = initialStata, action) {
                 selectedGroup: (select) || {},
             };
         }
+        case RENAME_GROUP: {
+            return {
+                ...state,
+                groups: {
+                    ...state.groups,
+                    [action.payload.frame]:
+                        (state.groups[state.currentFrame]).map((group) => (
+                            (group.id !== action.payload.group.id) ? group : action.payload.group)),
+                },
+            };
+        }
         case ADD_ITEM_TO_GROUP: {
             const newGroup = {
                 ...state.selectedGroup,
@@ -192,6 +204,28 @@ export default function (state = initialStata, action) {
                             (group.id !== state.selectedGroup.id) ? group : newGroup)),
                 },
                 selectedGroup: newGroup,
+            };
+        }
+        case SORTED_ITEM_TO_GROUP: {
+            // const newGroup = {
+            //     ...state.selectedGroup,
+            //     objIDs: action.payload.selectedGroup,
+            // };
+            return {
+                ...state,
+                groups: {
+                    ...state.groups,
+                    [state.currentFrame]:
+                        (state.groups[state.currentFrame]).map((group) => (
+                            (group.id !== state.selectedGroup.id) ? group : action.payload.selectedGroup)),
+                },
+                selectedGroup: action.payload.selectedGroup,
+            };
+        }
+        case HOVER_OBJECT: {
+            return {
+                ...state,
+                hoverObjectID: action.payload.id,
             };
         }
         default:

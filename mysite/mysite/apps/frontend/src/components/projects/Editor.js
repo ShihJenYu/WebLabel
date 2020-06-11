@@ -42,6 +42,7 @@ export class Editor extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            objIDsList: [1, 23, 4, 6, 5],
         };
     }
 
@@ -51,6 +52,20 @@ export class Editor extends Component {
 
     componentDidUpdate() {
 
+    }
+
+    onDragEndItem = (result) => {
+        const { source, destination } = result;
+        const { objIDsList } = this.state;
+        if (!destination) {
+            return;
+        }
+        const [remove] = objIDsList.splice(source.index, 1);
+        objIDsList.splice(destination.index, 0, remove);
+
+        console.log('before set selectedG.', objIDsList);
+        // sortItem2Group(selectedGroup);
+        this.setState({ objIDsList });
     }
 
     onSaveAnnotators = async () => {
@@ -66,6 +81,7 @@ export class Editor extends Component {
     }
 
     render() {
+        const { objIDsList } = this.state;
         const {
             show, project_name, onHide,
             annotators, selectedAnnotators, onChangeAnnotators, onResetAnnotators,

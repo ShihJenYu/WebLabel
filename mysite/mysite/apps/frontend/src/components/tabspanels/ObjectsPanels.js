@@ -13,7 +13,7 @@ import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 
 import AttributesPanel from './AttributesPanel';
 
-import { selectObject, deleteObject } from '../../actions/annotations';
+import { selectObject, deleteObject, hoverObject } from '../../actions/annotations';
 
 
 export class TabsPanels extends Component {
@@ -64,8 +64,10 @@ export class TabsPanels extends Component {
     }
 
     handleButtonClick2 = (e, id) => {
+        const { selectObject } = this.props;
         e.stopPropagation();
         console.log('click2', id);
+        selectObject(id);
     }
 
     handleButtonClick3 = (e, id) => {
@@ -91,6 +93,20 @@ export class TabsPanels extends Component {
         console.log('click6');
     }
 
+    handleObjectEnter = (target) => {
+        const { hoverObject, hoverObjectID } = this.props;
+        console.log('mouse enter', target.id);
+        if (hoverObjectID !== target.id) {
+            hoverObject(target.id);
+        }
+    }
+
+    handleObjectLeave = (target) => {
+        const { hoverObject } = this.props;
+        console.log('mouse Leave', target.id);
+        hoverObject('');
+    }
+
 
     render() {
         const {
@@ -99,7 +115,7 @@ export class TabsPanels extends Component {
             bClose,
             cClose,
         } = this.state;
-        const { annotations, labels, accordion1BodyH, currentFrame } = this.props;
+        const { annotations, labels, accordion1BodyH, currentFrame, hoverObjectID, selectedObject } = this.props;
         let objects = '';
         console.log('need find');
         if (annotations && Object.keys(labels).length) {
@@ -108,10 +124,18 @@ export class TabsPanels extends Component {
                     <div
                         key={annotation.id}
                         className="card"
-                        style={{ marginBottom: '1px' }}
+                        style={{
+                            marginBottom: '5px',
+                            borderWidth: '3px',
+                            borderColor: (selectedObject.id !== '' && selectedObject.id === annotation.id)
+                                ? 'black' : 'transparent',
+                            filter: (hoverObjectID !== '' && hoverObjectID === annotation.id) ? 'drop-shadow(2px 4px 6px black)' : 'none',
+                        }}
                         onClick={(e) => {
                             this.handleButtonClick(e, annotation.id);
                         }}
+                        onMouseEnter={(e) => { this.handleObjectEnter(annotation); }}
+                        onMouseLeave={(e) => { this.handleObjectLeave(annotation); }}
                     >
                         <div
                             className="card-header p-0"
@@ -223,6 +247,11 @@ TabsPanels.propTypes = {
     currentFrame: PropTypes.number.isRequired,
     accordion1BodyH: PropTypes.any,
     labels: PropTypes.object,
+    hoverObjectID: PropTypes.any,
+    hoverObject: PropTypes.func.isRequired,
+    selectedObject: PropTypes.object,
+
+
 };
 
 const mapStateToProps = (state) => ({
@@ -230,6 +259,8 @@ const mapStateToProps = (state) => ({
     labels: state.annotations.labels,
     currentFrame: state.annotations.currentFrame,
     accordion1BodyH: state.annotations.accordion1BodyH,
+    hoverObjectID: state.annotations.hoverObjectID,
+    selectedObject: state.annotations.selectedObject,
 });
 
-export default connect(mapStateToProps, { selectObject, deleteObject })(TabsPanels);
+export default connect(mapStateToProps, { selectObject, deleteObject, hoverObject })(TabsPanels);

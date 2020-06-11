@@ -183,6 +183,7 @@ export class Annotation extends Component {
                             style={{ background: 'slategray' }}
                             ref={(cell) => { this.playerFrameCell = cell; }}
                         >
+
                             <PlayerFrame
                                 currentImage={currentImage}
                                 // geometry={this.geometry}
@@ -197,7 +198,6 @@ export class Annotation extends Component {
                     </div>
                 </div>
             </div>
-
         );
     }
 }

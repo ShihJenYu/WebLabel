@@ -122,7 +122,9 @@ export class MultipleSelect extends Component {
         return (
             <div>
                 <Tooltip title={titleStr} arrow open={tipOpen}>
-                    <FormControl className={classes.formControl}>
+                    {/* classes.formControl */}
+                    <FormControl className="sss">
+
                         {/* <InputLabel id="demo-mutiple-checkbox-label">Tag</InputLabel> */}
                         <Select
                             // labelId="demo-mutiple-checkbox-label"
@@ -164,7 +166,10 @@ MultipleSelect.propTypes = {
     onChange: PropTypes.func,
 };
 
-export default compose(
-    withStyles(useStyles, { name: 'MultipleSelect' }),
-    connect(null, {}),
-)(MultipleSelect);
+// export default compose(
+//     withStyles(useStyles, { name: 'MultipleSelect' }),
+//     connect(null, {}),
+// )(MultipleSelect);
+
+
+export default connect(null, {})(MultipleSelect);

@@ -56,16 +56,16 @@ export class GroupCards extends Component {
 
     render() {
         const { hidden } = this.state;
-        const { labelname, objects, onObjectEnter, onObjectLeave, hoverObject } = this.props;
+        const { labelname, objects, onObjectEnter, onObjectLeave, hoverObjectID } = this.props;
 
         let content = '';
         if (!hidden) {
-            content = objects.map((object) => (
-                // <Badge variant="primary">{object.id}</Badge>
+            content = objects.map((object, index) => (
                 <button
+                    key={`k_${index + 1}`}
                     style={{
                         margin: '0px 2px',
-                        boxShadow: (hoverObject && hoverObject.id === object.id)
+                        boxShadow: (hoverObjectID !== '' && hoverObjectID === object.id)
                             ? '0px 0px 5px 0px' : '0px 0px 0px 0px',
                     }}
                     onClick={(e) => {
@@ -127,7 +127,7 @@ export class GroupCards extends Component {
 GroupCards.propTypes = {
     // annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
     objects: PropTypes.arrayOf(PropTypes.any).isRequired,
-    hoverObject: PropTypes.any.isRequired,
+    hoverObjectID: PropTypes.any.isRequired,
     labelname: PropTypes.string.isRequired,
     onObjectSelect: PropTypes.func.isRequired,
     onObjectEnter: PropTypes.func.isRequired,

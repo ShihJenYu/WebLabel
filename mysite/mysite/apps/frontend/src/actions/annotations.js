@@ -4,7 +4,8 @@ import {
     GET_ANNOTATIONS, PATCH_ANNOTATIONS, GET_LABELS, CHANGE_LABEL, SELECT_OBJECT, CHANGE_ATTR,
     CHANGE_DEFAULTLABEL, CREATE_OBJECT, DELETE_OBJECT, SET_ACCORDION1BODYH, GET_FRAMESTATUS,
     SET_CURRENTFRAME, GET_INITDATA, UPDATE_OBJPOINT,
-    CREATE_GROUP, DELETE_GROUP, SELECTE_GROUP, ADD_ITEM_TO_GROUP,
+    CREATE_GROUP, DELETE_GROUP, SELECTE_GROUP, ADD_ITEM_TO_GROUP, SORTED_ITEM_TO_GROUP, RENAME_GROUP,
+    HOVER_OBJECT,
 } from './types';
 
 // GET INITDATA
@@ -210,10 +211,42 @@ export const selecteGroup = (id) => (dispatch) => {
     });
 };
 
+// RENAME_GROUP
+export const renameGroup = (group, frame) => (dispatch) => {
+    dispatch({
+        type: RENAME_GROUP,
+        payload: {
+            group, frame,
+        },
+    });
+};
+
+
 // ADD_ITEM_TO_GROUP
 export const addItem2Group = (id) => (dispatch) => {
     dispatch({
         type: ADD_ITEM_TO_GROUP,
+        payload: {
+            id,
+        },
+    });
+};
+
+// SORTED_ITEM_TO_GROUP
+export const sortItem2Group = (selectedGroup) => (dispatch) => {
+    dispatch({
+        type: SORTED_ITEM_TO_GROUP,
+        payload: {
+            selectedGroup,
+        },
+    });
+};
+
+
+// HOVER_OBJECT
+export const hoverObject = (id) => (dispatch) => {
+    dispatch({
+        type: HOVER_OBJECT,
         payload: {
             id,
         },

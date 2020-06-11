@@ -344,6 +344,7 @@ export class Dashboard extends Component {
 
 
     onDragEndLabel = (result) => {
+        console.log('call onDragEndLabel test');
         const { source, destination } = result;
         if (!destination) {
             return;
@@ -584,6 +585,7 @@ export class Dashboard extends Component {
                                         Create
                                     </button>
                                 </div>
+
                             </div>
                         </div>
                         <div className="row">
@@ -664,7 +666,7 @@ export class Dashboard extends Component {
                         />
                     </div>
                 </div>
-            </div>
+            </div >
         );
     }
 }

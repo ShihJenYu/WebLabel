@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
 import {
-    updateObjPoint,
+    updateObjPoint, hoverObject,
 } from '../../actions/annotations';
 
 class Circle extends Component {
@@ -181,6 +181,7 @@ export class AnnoShape extends Component {
         this.state = {
             ...props,
             box,
+            hovered: false,
             // objID: props.objID,
             // points: props.points,
             // selected: false,
@@ -188,7 +189,6 @@ export class AnnoShape extends Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-
         if (nextProps.objID !== prevState.objID) {
             let box = {};
             if (nextProps.shapetype === 'rectangle') {
@@ -203,15 +203,29 @@ export class AnnoShape extends Component {
                     tr: { x: initPoints[1].x, y: initPoints[0].y },
                 };
             }
+            console.log('prop change', nextProps);
             return {
                 ...prevState,
                 ...nextProps,
                 box,
             };
         }
+        if (nextProps.hoverObjectID !== prevState.objID && prevState.hovered) {
+            console.log('aaaaa', nextProps, prevState);
+
+            return {
+                ...prevState,
+                hovered: false,
+            };
+        }
+        if (nextProps.hoverObjectID === prevState.objID && !prevState.hovered) {
+            console.log('bbbbb', nextProps, prevState);
+            return {
+                ...prevState,
+                hovered: true,
+            };
+        }
         return null;
-
-
     }
 
     pointsStringToArray = (points) => {
@@ -303,8 +317,9 @@ export class AnnoShape extends Component {
     }
 
     render() {
-        const { shapetype, shapeIndex, selectedObject, objID, selected, geometry } = this.props;
-        const { box, points } = this.state;
+        const { shapetype, shapeIndex, selectedObject, selected, geometry, } = this.props;
+        const { objID, box, points, hovered } = this.state;
+        console.log('annoshape render', objID);
 
         const shapeBox = {
             xtl: Number.MAX_SAFE_INTEGER,
@@ -330,7 +345,7 @@ export class AnnoShape extends Component {
                         <Rect
                             onClick={(e) => { console.log('rect on click', e.target); }}
                             style={{
-                                stroke: '#edba80', strokeWidth: 2, strokeOpacity: 1, fill: '#edba80', fillOpacity: 0.2,
+                                stroke: '#edba80', strokeWidth: 2, strokeOpacity: 1, fill: '#edba80', fillOpacity: ((hovered) || selected) ? 0.2 : 0, //objID === hoverObjectID
                             }}
                             x={shapeBox.xtl}
                             y={shapeBox.ytl}
@@ -367,7 +382,7 @@ export class AnnoShape extends Component {
                         <polygon
                             points={points}
                             style={{
-                                stroke: '#ffcc00', strokeWidth: 2, strokeOpacity: 1, fill: '#ffcc00', fillOpacity: 0.2,
+                                stroke: '#ffcc00', strokeWidth: 2, strokeOpacity: 1, fill: '#ffcc00', fillOpacity: ((hovered) || selected) ? 0.2 : 0,
                             }}
                         />
                         {(selected) ? (
@@ -419,7 +434,23 @@ export class AnnoShape extends Component {
                                     />
                                 ))}
                             </g>
-                        ) : ''}
+                        )
+                            : (
+                                <g
+                                    style={{
+                                        stroke: 'black', strokeWidth: ((hovered) || selected) ? 3 : 1, strokeOpacity: 1, fill: '#3ddb8a', fillOpacity: 1,
+                                    }}
+                                >
+                                    <circle
+                                        geometry={geometry}
+                                        // onClick={(e) => { this.testOnClick(e); }}
+                                        // updatePoint={(x, y) => { this.updatePolyPoint(x, y, pid); }}
+                                        cx={pointsArray[0].x}
+                                        cy={pointsArray[0].y}
+                                        r="4"
+                                    />
+                                </g>
+                            )}
                     </>
                 );
                 break;
@@ -447,7 +478,7 @@ export class AnnoShape extends Component {
                             : (
                                 <g
                                     style={{
-                                        stroke: 'black', strokeWidth: 1, strokeOpacity: 1, fill: '#957de3', fillOpacity: 1,
+                                        stroke: 'black', strokeWidth: ((hovered) || selected) ? 3 : 1, strokeOpacity: 1, fill: '#957de3', fillOpacity: 1,
                                     }}
                                 >
                                     {pointsArray.map((pt, pid) => (
@@ -482,12 +513,15 @@ AnnoShape.propTypes = {
     shapeIndex: PropTypes.number.isRequired,
     shapetype: PropTypes.string.isRequired,
     selectedObject: PropTypes.object,
+    hoverObjectID: PropTypes.any.isRequired,
 
 };
 
 const mapStateToProps = (state) => ({
     // annotations: state.annotations.annotations,
     selectedObject: state.annotations.selectedObject,
+    hoverObjectID: state.annotations.hoverObjectID,
+
 });
 
 export default connect(mapStateToProps, { updateObjPoint })(AnnoShape);

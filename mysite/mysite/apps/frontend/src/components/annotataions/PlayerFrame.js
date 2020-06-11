@@ -368,7 +368,7 @@ export class PlayerFrame extends Component {
     }
 
     drawShapes = () => {
-        const { currentFrame, annotations, selectedObject } = this.props;
+        const { currentFrame, annotations, selectedObject, hoverObjectID } = this.props;
         const { geometry } = this.state;
         // console.log(currentFrame, annotations);
 
@@ -387,6 +387,7 @@ export class PlayerFrame extends Component {
                             shapeIndex={index}
                             shapetype={obj.shapetype}
                             selected={false}
+                            hovered={hoverObjectID === obj.id}
                         />,
                     );
                 }
@@ -402,6 +403,7 @@ export class PlayerFrame extends Component {
                     shapeIndex={selectedShape.index}
                     shapetype={selectedShape.obj.shapetype}
                     selected
+                    hovered={hoverObjectID === selectedShape.obj.id}
                 />,
             );
         }
@@ -475,9 +477,10 @@ export class PlayerFrame extends Component {
     }
 
     render() {
-        // console.log('render palyerFrame');
         const { points, shapeType, geometry } = this.state;
-        const { currentImage } = this.props;
+        const { currentImage, hoverObjectID } = this.props;
+        console.log('render palyerFrame', hoverObjectID);
+
 
         const bg_img_src = (currentImage) ? currentImage.src : '';
         const bg_img_width = (currentImage) ? currentImage.width : 1;
@@ -679,12 +682,15 @@ PlayerFrame.propTypes = {
     annotations: PropTypes.arrayOf(PropTypes.any).isRequired,
     currentFrame: PropTypes.number.isRequired,
     selectedObject: PropTypes.object,
+    hoverObjectID: PropTypes.any,
+
 };
 
 const mapStateToProps = (state) => ({
     annotations: state.annotations.annotations,
     currentFrame: state.annotations.currentFrame,
     selectedObject: state.annotations.selectedObject,
+    hoverObjectID: state.annotations.hoverObjectID.isRequired,
 
 });
 
